@@ -7,16 +7,17 @@ namespace ZapretWPF
     public class ZapretEngine
     {
         private Process _winwsProcess;
-        public Action<string> OnLog { get; set; } // Событие для передачи логов в UI
+        public Action<string> OnLog { get; set; }
 
         public void Start(bool enableDiscord, bool enableYouTube)
         {
             if (_winwsProcess != null && !_winwsProcess.HasExited)
             {
-                OnLog?.Invoke("Zapret уже запущен!");
+                OnLog?.Invoke("Обход уже запущен!");
                 return;
             }
 
+            CreateDummyListsIfMissing();
             string args = GetArguments(enableDiscord, enableYouTube);
             OnLog?.Invoke($"Запуск winws.exe с аргументами:\n{args}\n");
 
@@ -26,12 +27,12 @@ namespace ZapretWPF
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = @"bin\winws.exe",
+                        FileName = @"bin\winws.exe", // После сборки файлы лежат в папке bin
                         Arguments = args,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
-                        CreateNoWindow = true // Запускаем скрыто, без черного окна
+                        CreateNoWindow = true
                     }
                 };
 
@@ -42,11 +43,11 @@ namespace ZapretWPF
                 _winwsProcess.BeginOutputReadLine();
                 _winwsProcess.BeginErrorReadLine();
 
-                OnLog?.Invoke("=== Процесс winws.exe успешно запущен ===");
+                OnLog?.Invoke("=== Обход успешно запущен ===");
             }
             catch (Exception ex)
             {
-                OnLog?.Invoke($"Ошибка запуска: {ex.Message}. Проверь наличие папки bin с winws.exe");
+                OnLog?.Invoke($"Ошибка запуска: {ex.Message}. Убедитесь, что файлы скопировались правильно.");
             }
         }
 
@@ -57,54 +58,80 @@ namespace ZapretWPF
                 _winwsProcess.Kill();
                 _winwsProcess.Dispose();
                 _winwsProcess = null;
-                OnLog?.Invoke("=== Процесс остановлен ===");
+                OnLog?.Invoke("=== Обход остановлен ===");
             }
         }
 
         public void InstallService(bool enableDiscord, bool enableYouTube)
         {
+            CreateDummyListsIfMissing();
             string args = GetArguments(enableDiscord, enableYouTube);
             string binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
 
-            // Точный аналог service_install.bat
-            // Экранируем кавычки для binPath и аргументов, чтобы sc.exe всё правильно понял
-            string scArgs = $"create \"ZapretService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\"")}\" start= auto displayname= \"Zapret (WPF Clone)\"";
+            string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";
 
-            RunAsAdmin("sc.exe", "stop ZapretService"); // На всякий случай останавливаем старую
-            RunAsAdmin("sc.exe", "delete ZapretService");
+            RunAsAdmin("sc.exe", "stop ObhodService");
+            RunAsAdmin("sc.exe", "delete ObhodService");
             RunAsAdmin("sc.exe", scArgs);
-            RunAsAdmin("sc.exe", "start ZapretService");
+            RunAsAdmin("sc.exe", "start ObhodService");
 
             OnLog?.Invoke("Служба установлена и запущена на уровне системы (автозапуск).");
         }
 
-        // Этот метод генерирует те самые параметры, которые лежат в батниках Flowseal
+        private void CreateDummyListsIfMissing()
+        {
+            // Убеждаемся, что при запуске .exe все пользовательские файлы на месте
+            string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
+            if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
+
+            string[] dummyFiles = { "ipset-exclude-user.txt", "list-general-user.txt", "list-exclude-user.txt" };
+            string[] emptyFiles = { "ipset-exclude.txt", "list-exclude.txt" };
+
+            foreach (var file in dummyFiles)
+            {
+                string path = Path.Combine(listsPath, file);
+                if (!File.Exists(path)) File.WriteAllText(path, "domain.example.abc");
+            }
+            foreach (var file in emptyFiles)
+            {
+                string path = Path.Combine(listsPath, file);
+                if (!File.Exists(path)) File.WriteAllText(path, "");
+            }
+        }
+
         private string GetArguments(bool discord, bool youtube)
         {
-            // Здесь должна быть ТОЧНАЯ копия параметров из .bat файлов Flowseal!
-            // В примере ниже приведены типовые рабочие стратегии для примера. 
-            // Чтобы было 1 в 1, скопируй аргументы из general+discord.bat, youtube.bat и т.д.
+            // Здесь мы используем актуальную, самую мощную стратегию от Flowseal
+            string gameFilterTcp = "12";
+            string gameFilterUdp = "12";
 
-            string args = "--wf-tcp=80,443 --wf-udp=443,50000-65535";
+            string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
+            string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
-            if (discord && youtube)
+            string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443,{gameFilterTcp} --wf-udp=443,19294-19344,50000-50100,{gameFilterUdp} ";
+
+            // Общие ресурсы и сервисы
+            args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+            args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
+
+            if (discord)
             {
-                args += " --filter-udp=443 --hostlist=\"lists\\list-discord.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --dpi-desync-udplen-pattern=0xDeadBeef --dpi-desync-any-protocol --new " +
-                        "--filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new " +
-                        "--filter-tcp=80 --hostlist=\"lists\\list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new " +
-                        "--filter-tcp=443 --hostlist=\"lists\\list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new " +
-                        "--filter-tcp=443 --hostlist=\"lists\\list-discord.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1";
+                args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
             }
-            else if (youtube)
+
+            if (youtube)
             {
-                // Логика из youtube.bat
-                args += " --filter-tcp=80 --hostlist=\"lists\\list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new --filter-tcp=443 --hostlist=\"lists\\list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1";
+                args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
             }
-            else if (discord)
-            {
-                // Логика из discord.bat
-                args += " --filter-udp=443 --hostlist=\"lists\\list-discord.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --dpi-desync-udplen-pattern=0xDeadBeef --dpi-desync-any-protocol --new --filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new --filter-tcp=443 --hostlist=\"lists\\list-discord.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1";
-            }
+
+            // IPSET фильтры
+            args += $"--filter-udp=443 --ipset=\"{lists}ipset-all.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+            args += $"--filter-tcp=80,443,8443 --ipset=\"{lists}ipset-all.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
+
+            // Фильтры для игр (отключены по умолчанию)
+            args += $"--filter-tcp={gameFilterTcp} --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-any-protocol=1 --dpi-desync-cutoff=n3 --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
+            args += $"--filter-udp={gameFilterUdp} --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=12 --dpi-desync-any-protocol=1 --dpi-desync-fake-unknown-udp=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-cutoff=n2";
 
             return args;
         }
@@ -115,8 +142,8 @@ namespace ZapretWPF
             {
                 FileName = fileName,
                 Arguments = args,
-                UseShellExecute = true, // Нужно для запроса прав
-                Verb = "runas", // Запрашиваем права администратора (окно UAC)
+                UseShellExecute = true,
+                Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden
             });
             process?.WaitForExit();

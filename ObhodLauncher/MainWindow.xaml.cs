@@ -26,7 +26,11 @@ namespace ZapretWPF
         {
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
+
+            // Получаем индекс выбранной стратегии из ComboBox
             int strategy = cmbStrategy.SelectedIndex;
+
+            // Обязательно вызываем метод с 3 аргументами!
             _engine.Start(discord, youtube, strategy);
         }
 
@@ -40,6 +44,7 @@ namespace ZapretWPF
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
             int strategy = cmbStrategy.SelectedIndex;
+
             _engine.InstallService(discord, youtube, strategy);
         }
 
@@ -50,7 +55,7 @@ namespace ZapretWPF
 
         protected override void OnClosed(EventArgs e)
         {
-            _engine.Stop(); // Останавливаем только "Тест в окне", Служба продолжит работать
+            _engine.Stop();
             base.OnClosed(e);
         }
     }

@@ -108,12 +108,12 @@ namespace ZapretWPF
 
         private string GetArguments(bool discord, bool youtube, int strategyIndex)
         {
+            // Пути должны быть без пробелов и кавычек в самом пути, но в кавычках при склейке
             string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
             string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
-            string baseTcpPorts = "80,443,2053,2083,2087,2096,8443,12";
-            string baseUdpPorts = "443,19294-19344,50000-50100,12";
-            string args = $"--wf-tcp={baseTcpPorts} --wf-udp={baseUdpPorts} ";
+            // Базовые порты (обязательный параметр)
+            string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443 --wf-udp=443,19294-19344,50000-50100 ";
 
             switch (strategyIndex)
             {
@@ -171,8 +171,7 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 4: // 5. SupaModd Custom (Макс. Пробив)
-                    // Кастомная тактика: комбинация disorder2 + badseq + md5sig для обмана сложных систем DPI (МТС, Ростелеком, Дом.ру)
+                case 4: // 5. SupaModd Custom (Исправлено)
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-udplen-increment=2 --dpi-desync-any-protocol --new ";
                     args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,disorder2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq,md5sig --dpi-desync-autohost=sni --new ";
                     if (discord)
@@ -187,10 +186,8 @@ namespace ZapretWPF
                     break;
             }
 
-            // Добавляем общий fallback для всех остальных заблокированных сайтов (IPSet)
-            args += $"--filter-udp=443 --ipset=\"{lists}ipset-all.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --new ";
-            args += $"--filter-tcp=80,443 --ipset=\"{lists}ipset-all.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1";
-
+            // ВАЖНО: fallback IPSet убран, так как он крашил winws, если файл ipset пустой или не того формата!
+            // Вместо этого просто возвращаем строку как есть (winws.exe автоматически проигнорирует трафик без фильтров).
             return args;
         }
 

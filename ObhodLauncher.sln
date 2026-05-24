@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObhodLauncher", "ObhodLauncher\ObhodLauncher.csproj", "{BA413A0F-9F98-40E7-9B7E-83E2F9231ABE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA413A0F-9F98-40E7-9B7E-83E2F9231ABE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA413A0F-9F98-40E7-9B7E-83E2F9231ABE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA413A0F-9F98-40E7-9B7E-83E2F9231ABE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA413A0F-9F98-40E7-9B7E-83E2F9231ABE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7CD76E18-73F2-449B-8F4A-8A349192B240}
+	EndGlobalSection
+EndGlobal

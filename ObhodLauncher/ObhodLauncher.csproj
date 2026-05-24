@@ -8,4 +8,9 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="obhod-lists\" />
+    <Folder Include="obhod-bin\" />
+  </ItemGroup>
+
 </Project>

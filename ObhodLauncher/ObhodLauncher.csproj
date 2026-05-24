@@ -8,9 +8,14 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="obhod-lists\" />
-    <Folder Include="obhod-bin\" />
-  </ItemGroup>
+  <!-- Этот блок автоматически скопирует твои файлы obhod-bin и obhod-lists в папку с готовым .exe при компиляции -->
+  <Target Name="CopyZapretFiles" AfterTargets="Build">
+    <ItemGroup>
+      <ZapretBinFiles Include="obhod-bin\**\*.*" />
+      <ZapretListsFiles Include="obhod-lists\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" />
+    <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" />
+  </Target>
 
 </Project>

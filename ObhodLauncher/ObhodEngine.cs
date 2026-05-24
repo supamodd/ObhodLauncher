@@ -9,17 +9,17 @@ namespace ZapretWPF
         private Process _winwsProcess;
         public Action<string> OnLog { get; set; }
 
-        public void Start(bool enableDiscord, bool enableYouTube)
+        public void Start(bool enableDiscord, bool enableYouTube, int strategyIndex)
         {
             if (_winwsProcess != null && !_winwsProcess.HasExited)
             {
-                OnLog?.Invoke("Обход уже запущен!");
+                OnLog?.Invoke("Обход уже запущен в режиме консоли!");
                 return;
             }
 
             CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube);
-            OnLog?.Invoke($"Запуск winws.exe с аргументами:\n{args}\n");
+            string args = GetArguments(enableDiscord, enableYouTube, strategyIndex);
+            OnLog?.Invoke($"Запуск winws.exe с аргументами (Стратегия {strategyIndex}):\n{args}\n");
 
             try
             {
@@ -27,7 +27,7 @@ namespace ZapretWPF
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = @"bin\winws.exe", // После сборки файлы лежат в папке bin
+                        FileName = @"bin\winws.exe",
                         Arguments = args,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -43,7 +43,7 @@ namespace ZapretWPF
                 _winwsProcess.BeginOutputReadLine();
                 _winwsProcess.BeginErrorReadLine();
 
-                OnLog?.Invoke("=== Обход успешно запущен ===");
+                OnLog?.Invoke("=== Обход успешно запущен (Консольный режим) ===");
             }
             catch (Exception ex)
             {
@@ -53,19 +53,20 @@ namespace ZapretWPF
 
         public void Stop()
         {
+            // Останавливаем консольный процесс, если он был
             if (_winwsProcess != null && !_winwsProcess.HasExited)
             {
                 _winwsProcess.Kill();
                 _winwsProcess.Dispose();
                 _winwsProcess = null;
-                OnLog?.Invoke("=== Обход остановлен ===");
+                OnLog?.Invoke("=== Консольный процесс остановлен ===");
             }
         }
 
-        public void InstallService(bool enableDiscord, bool enableYouTube)
+        public void InstallService(bool enableDiscord, bool enableYouTube, int strategyIndex)
         {
             CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube);
+            string args = GetArguments(enableDiscord, enableYouTube, strategyIndex);
             string binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
 
             string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";
@@ -75,12 +76,19 @@ namespace ZapretWPF
             RunAsAdmin("sc.exe", scArgs);
             RunAsAdmin("sc.exe", "start ObhodService");
 
-            OnLog?.Invoke("Служба установлена и запущена на уровне системы (автозапуск).");
+            OnLog?.Invoke($"=== Служба установлена и запущена на уровне системы (Стратегия {strategyIndex}) ===");
+            OnLog?.Invoke("Теперь вы можете закрыть программу. Обход продолжит работать!");
+        }
+
+        public void RemoveService()
+        {
+            RunAsAdmin("sc.exe", "stop ObhodService");
+            RunAsAdmin("sc.exe", "delete ObhodService");
+            OnLog?.Invoke("=== Фоновая служба удалена. Обход полностью отключен. ===");
         }
 
         private void CreateDummyListsIfMissing()
         {
-            // Убеждаемся, что при запуске .exe все пользовательские файлы на месте
             string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
             if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
 
@@ -99,41 +107,39 @@ namespace ZapretWPF
             }
         }
 
-        private string GetArguments(bool discord, bool youtube)
+        private string GetArguments(bool discord, bool youtube, int strategyIndex)
         {
-            // Здесь мы используем актуальную, самую мощную стратегию от Flowseal
-            string gameFilterTcp = "12";
-            string gameFilterUdp = "12";
-
             string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
             string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
-            string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443,{gameFilterTcp} --wf-udp=443,19294-19344,50000-50100,{gameFilterUdp} ";
-
-            // Общие ресурсы и сервисы
-            args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-            args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
-
-            if (discord)
+            if (strategyIndex == 0) // General (Основная)
             {
-                args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
-            }
+                string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443,12 --wf-udp=443,19294-19344,50000-50100,12 ";
+                args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
 
-            if (youtube)
+                if (discord)
+                {
+                    args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                    args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                }
+                if (youtube)
+                {
+                    args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                }
+                args += $"--filter-udp=443 --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                args += $"--filter-tcp=80,443,8443 --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\"";
+                return args;
+            }
+            else if (strategyIndex == 1) // ALT 1 (Чуть более агрессивный fake)
             {
-                args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                // Это пример стратегии ALT, ты можешь менять эти параметры позже на те, которые тебе нравятся
+                return $"--wf-tcp=80,443 --wf-udp=443,50000-65535 --filter-udp=443 --hostlist=\"{lists}list-discord.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --dpi-desync-udplen-pattern=0xDeadBeef --dpi-desync-any-protocol --new --filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new --filter-tcp=80 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new --filter-tcp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new --filter-tcp=443 --hostlist=\"{lists}list-discord.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1";
             }
-
-            // IPSET фильтры
-            args += $"--filter-udp=443 --ipset=\"{lists}ipset-all.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-            args += $"--filter-tcp=80,443,8443 --ipset=\"{lists}ipset-all.txt\" --hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
-
-            // Фильтры для игр (отключены по умолчанию)
-            args += $"--filter-tcp={gameFilterTcp} --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=multisplit --dpi-desync-any-protocol=1 --dpi-desync-cutoff=n3 --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
-            args += $"--filter-udp={gameFilterUdp} --ipset=\"{lists}ipset-all.txt\" --ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\" --dpi-desync=fake --dpi-desync-repeats=12 --dpi-desync-any-protocol=1 --dpi-desync-fake-unknown-udp=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-cutoff=n2";
-
-            return args;
+            else // ALT 2 (Для Дом.ру / Ростелеком)
+            {
+                return $"--wf-tcp=80,443 --wf-udp=443,50000-65535 --filter-udp=443 --hostlist=\"{lists}list-discord.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --dpi-desync-udplen-pattern=0xDeadBeef --dpi-desync-any-protocol --new --filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new --filter-tcp=80 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new --filter-tcp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new --filter-tcp=443 --hostlist=\"{lists}list-discord.txt\" --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1";
+            }
         }
 
         private void RunAsAdmin(string fileName, string args)

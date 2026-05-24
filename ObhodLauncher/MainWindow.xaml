@@ -1,7 +1,7 @@
 ﻿<Window x:Class="ZapretWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ObhodLauncher" Height="450" Width="650"
+        Title="ObhodLauncher" Height="450" Width="680"
         Background="#1e1e1e" Foreground="White">
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -14,8 +14,15 @@
         <TextBlock Text="Zapret: Управление обходом" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
-            <CheckBox x:Name="chkDiscord" Content="Discord" IsChecked="True" Foreground="White" Margin="0,0,15,0" FontSize="14"/>
-            <CheckBox x:Name="chkYouTube" Content="YouTube" IsChecked="True" Foreground="White" FontSize="14"/>
+            <CheckBox x:Name="chkDiscord" Content="Discord" IsChecked="True" Foreground="White" Margin="0,0,15,0" FontSize="14" VerticalAlignment="Center"/>
+            <CheckBox x:Name="chkYouTube" Content="YouTube" IsChecked="True" Foreground="White" Margin="0,0,25,0" FontSize="14" VerticalAlignment="Center"/>
+
+            <TextBlock Text="Стратегия:" Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <ComboBox x:Name="cmbStrategy" Width="150" SelectedIndex="0">
+                <ComboBoxItem Content="General (Основная)"/>
+                <ComboBoxItem Content="ALT 1 (Fake)"/>
+                <ComboBoxItem Content="ALT 2 (Disorder)"/>
+            </ComboBox>
         </StackPanel>
 
         <!-- Окно логов консоли -->
@@ -24,9 +31,11 @@
                  FontFamily="Consolas" BorderThickness="0" Padding="10"/>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button Content="Старт (Консоль)" Width="120" Height="35" Margin="0,0,10,0" Click="BtnStart_Click"/>
-            <Button Content="Стоп" Width="90" Height="35" Margin="0,0,10,0" Click="BtnStop_Click"/>
-            <Button Content="Установить Службу" Width="140" Height="35" Click="BtnInstallService_Click"/>
+            <Button Content="Тест в окне" Width="100" Height="35" Margin="0,0,10,0" Click="BtnStart_Click" ToolTip="Запустить в текущем окне (остановится при закрытии)"/>
+            <Button Content="Стоп тест" Width="90" Height="35" Margin="0,0,30,0" Click="BtnStop_Click"/>
+
+            <Button Content="Запустить Службу" Background="#2e7d32" Foreground="White" Width="140" Height="35" Margin="0,0,10,0" Click="BtnInstallService_Click" ToolTip="Запустить в фоне. Будет работать даже после закрытия программы!"/>
+            <Button Content="Удалить Службу" Background="#c62828" Foreground="White" Width="130" Height="35" Click="BtnRemoveService_Click"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -12,13 +12,12 @@ namespace ZapretWPF
             InitializeComponent();
             _engine = new ZapretEngine();
 
-            // Подписываемся на события логов от движка и выводим их в текстовое поле UI
             _engine.OnLog = (message) =>
             {
                 Dispatcher.Invoke(() =>
                 {
                     txtLogs.AppendText(message + Environment.NewLine);
-                    txtLogs.ScrollToEnd(); // Автоскролл вниз
+                    txtLogs.ScrollToEnd();
                 });
             };
         }
@@ -27,7 +26,8 @@ namespace ZapretWPF
         {
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
-            _engine.Start(discord, youtube);
+            int strategy = cmbStrategy.SelectedIndex;
+            _engine.Start(discord, youtube, strategy);
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
@@ -37,23 +37,20 @@ namespace ZapretWPF
 
         private void BtnInstallService_Click(object sender, RoutedEventArgs e)
         {
-            MessageBoxResult result = MessageBox.Show(
-                "Установить zapret как фоновую службу Windows? (Потребуются права администратора)",
-                "Установка службы",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                bool discord = chkDiscord.IsChecked ?? false;
-                bool youtube = chkYouTube.IsChecked ?? false;
-                _engine.InstallService(discord, youtube);
-            }
+            bool discord = chkDiscord.IsChecked ?? false;
+            bool youtube = chkYouTube.IsChecked ?? false;
+            int strategy = cmbStrategy.SelectedIndex;
+            _engine.InstallService(discord, youtube, strategy);
         }
 
-        // Останавливаем процесс, если пользователь закрывает окно программы
+        private void BtnRemoveService_Click(object sender, RoutedEventArgs e)
+        {
+            _engine.RemoveService();
+        }
+
         protected override void OnClosed(EventArgs e)
         {
-            _engine.Stop();
+            _engine.Stop(); // Останавливаем только "Тест в окне", Служба продолжит работать
             base.OnClosed(e);
         }
     }

@@ -196,13 +196,15 @@ namespace ZapretWPF
                     break;
 
                 case 5: // 6. SupaModd Custom (Билайн / Регионы)
-                    // Убран несовместимый параметр autohost. Используем split2 + badseq.
+                    // Убрали anycast, так как его нет в v72.9
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
                     args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
 
                     if (discord)
                     {
-                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-anycast --dpi-desync-cutoff=d3 --new ";
+                        // Для дискорда (UDP) используем просто агрессивный fake-repeats=11 и any-protocol
+                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
+                        // Для TCP (медиа дискорда)
                         args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
                     }
                     if (youtube)

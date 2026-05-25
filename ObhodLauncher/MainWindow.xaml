@@ -7,13 +7,26 @@
         FontFamily="Segoe UI">
 
     <Window.Resources>
-        <!-- Акцентный цвет (можешь поменять на любой, например #007acc) -->
         <SolidColorBrush x:Key="AccentColor" Color="#8b5cf6"/>
         <SolidColorBrush x:Key="AccentColorHover" Color="#7c3aed"/>
         <SolidColorBrush x:Key="BgColor" Color="#18181b"/>
         <SolidColorBrush x:Key="CardColor" Color="#27272a"/>
 
-        <!-- Стиль для красивых закругленных кнопок -->
+        <!-- Базовый шаблон для кнопок -->
+        <ControlTemplate x:Key="ButtonTemplate" TargetType="Button">
+            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#3f3f46"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#52525b"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
         <Style x:Key="ModernButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource CardColor}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -22,91 +35,113 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#3f3f46"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#52525b"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
         </Style>
 
-        <!-- Акцентная кнопка -->
+        <ControlTemplate x:Key="AccentButtonTemplate" TargetType="Button">
+            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="{StaticResource AccentColorHover}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#6d28d9"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
         <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
             <Setter Property="Background" Value="{StaticResource AccentColor}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentColorHover}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#6d28d9"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template" Value="{StaticResource AccentButtonTemplate}"/>
         </Style>
 
-        <!-- Кнопка Остановки (Красная) -->
+        <ControlTemplate x:Key="DangerButtonTemplate" TargetType="Button">
+            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#dc2626"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
         <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
             <Setter Property="Background" Value="#ef4444"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#dc2626"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template" Value="{StaticResource DangerButtonTemplate}"/>
         </Style>
 
-        <!-- Исправленный стиль переключателей (Toggle Switch) -->
+        <!-- КРАСИВЫЙ АНИМИРОВАННЫЙ TOGGLE SWITCH -->
+        <!-- Решение проблемы XDG0006: мы используем storyboard для переключения X-позиции! -->
+        <ControlTemplate x:Key="ToggleSwitchTemplate" TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+                <Border x:Name="SwitchBg" Width="40" Height="22" CornerRadius="11" Background="#3f3f46" VerticalAlignment="Center">
+                    <Ellipse x:Name="SwitchThumb" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0">
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="ThumbTranslate" X="0"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Border>
+                <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="SwitchBg" Property="Background" Value="{StaticResource AccentColor}"/>
+                </Trigger>
+                <!-- Плавная анимация переключателя с использованием Storyboard, это работает без ошибок -->
+                <EventTrigger RoutedEvent="CheckBox.Checked">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="18" Duration="0:0:0.15"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="CheckBox.Unchecked">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.15"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
         <Style x:Key="ToggleSwitch" TargetType="CheckBox">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal" Background="Transparent">
-                            <Border x:Name="SwitchBg" Width="40" Height="22" CornerRadius="11" Background="#3f3f46" VerticalAlignment="Center">
-                                <!-- Мы убрали TranslateTransform, меняем просто Margin для движения -->
-                                <Ellipse x:Name="SwitchThumb" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0"/>
-                            </Border>
-                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="SwitchBg" Property="Background" Value="{StaticResource AccentColor}"/>
-                                <Setter TargetName="SwitchThumb" Property="Margin" Value="21,0,0,0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Template" Value="{StaticResource ToggleSwitchTemplate}"/>
+        </Style>
+
+        <!-- ПРАВИЛЬНЫЙ ШАБЛОН ДЛЯ ВКЛАДОК (Решение ошибки XDG0010) -->
+        <ControlTemplate x:Key="TabItemTemplate" TargetType="TabItem">
+            <Border Name="Border" Padding="20,12" Margin="0,0,5,0" Background="Transparent" CornerRadius="8,8,0,0" BorderThickness="0,0,0,3" BorderBrush="Transparent">
+                <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
+                    <Setter TargetName="Border" Property="Background" Value="{StaticResource CardColor}"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Border" Property="Background" Value="#27272a"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#a1a1aa"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template" Value="{StaticResource TabItemTemplate}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -120,14 +155,11 @@
             </StackPanel>
         </Grid>
 
-        <!-- Основной контент со вкладками (отступ сверху 60) -->
+        <!-- Основной контент со вкладками -->
         <TabControl Background="Transparent" BorderThickness="0" Margin="15,75,15,15">
 
             <!-- ВКЛАДКА 1: ОБХОД DPI -->
-            <TabItem>
-                <TabItem.Header>
-                    <TextBlock Text="Обход DPI" FontSize="16" FontWeight="SemiBold" Padding="10,5"/>
-                </TabItem.Header>
+            <TabItem Header="Обход DPI">
                 <Grid Margin="5,15,5,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -144,7 +176,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Переключатели -->
+                            <!-- Переключатели (Теперь с плавной анимацией!) -->
                             <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,30,0">
                                 <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
                                 <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}"/>
@@ -155,9 +187,9 @@
                                 <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,5"/>
                                 <ComboBox x:Name="cmbStrategy" Height="35" FontSize="14" SelectedIndex="5" Padding="10,5">
                                     <ComboBoxItem Content="1. Flowseal (General)"/>
-                                    <ComboBoxItem Content="2. Flowseal (ALT 1 - Fake)"/>
-                                    <ComboBoxItem Content="3. Flowseal (ALT 2 - Disorder)"/>
-                                    <ComboBoxItem Content="4. Flowseal (ALT 3 - Hostfakesplit)"/>
+                                    <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
+                                    <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
+                                    <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
                                     <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
                                     <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
                                 </ComboBox>
@@ -183,33 +215,27 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="🛡 Установить как Службу" Width="190" Style="{StaticResource ModernButton}" Margin="0,0,10,0" Click="BtnInstallService_Click"/>
-                            <Button Content="Удалить Службу" Width="140" Style="{StaticResource DangerButton}" Click="BtnRemoveService_Click"/>
+                            <Button Content="🛡 Установить Службу" Width="170" Style="{StaticResource ModernButton}" Margin="0,0,10,0" Click="BtnInstallService_Click"/>
+                            <Button Content="Удалить Службу" Width="130" Style="{StaticResource DangerButton}" Click="BtnRemoveService_Click"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
             </TabItem>
 
             <!-- ВКЛАДКА 2: ДОП ФУНКЦИИ -->
-            <TabItem>
-                <TabItem.Header>
-                    <TextBlock Text="Инструменты" FontSize="16" FontWeight="SemiBold" Padding="10,5"/>
-                </TabItem.Header>
+            <TabItem Header="Инструменты">
                 <Grid Margin="5,15,5,0">
-                    <!-- Заготовка карточек для будущих фишек -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0">
 
-                        <!-- Карточка 1 -->
                         <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Margin="0,0,20,0" Padding="20">
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="🌐" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                 <TextBlock Text="Тест соединения" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                                <TextBlock Text="Быстрая проверка доступности серверов Discord." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" Margin="0,0,0,15"/>
+                                <TextBlock Text="Быстрая проверка серверов Discord и YouTube." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" Margin="0,0,0,15"/>
                                 <Button Content="Скоро" Style="{StaticResource ModernButton}" IsEnabled="False"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Карточка 2 -->
                         <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Margin="0,0,20,0" Padding="20">
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="🔄" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
@@ -219,7 +245,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Карточка 3 -->
                         <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Padding="20">
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="🧹" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>

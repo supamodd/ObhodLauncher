@@ -55,37 +55,12 @@ namespace ZapretWPF
 
         private void BtnFlushDns_Click(object sender, RoutedEventArgs e)
         {
-            // Надежный способ переключить вкладку на первую (индекс 0) без использования x:Name
-            if (this.Content is System.Windows.Controls.Grid mainGrid)
-            {
-                foreach (var child in mainGrid.Children)
-                {
-                    if (child is System.Windows.Controls.TabControl tabControl)
-                    {
-                        tabControl.SelectedIndex = 0;
-                        break;
-                    }
-                }
-            }
-
+            if (MainTabControl != null) MainTabControl.SelectedIndex = 0;
             _engine.FlushDNS();
         }
 
         private async void BtnTestConnection_Click(object sender, RoutedEventArgs e)
         {
-            // Переключаем на вкладку с логами
-            if (this.Content is System.Windows.Controls.Grid mainGrid)
-            {
-                foreach (var child in mainGrid.Children)
-                {
-                    if (child is System.Windows.Controls.TabControl tabControl)
-                    {
-                        tabControl.SelectedIndex = 0;
-                        break;
-                    }
-                }
-            }
-
             await _engine.TestConnectionAsync();
         }
 

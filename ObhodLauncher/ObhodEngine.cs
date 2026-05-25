@@ -253,13 +253,13 @@ namespace ZapretWPF
         {
             OnLog?.Invoke("=== Запуск проверки соединения ===");
 
-            // Проверяем Discord
+            // Проверяем Discord (API и страницу статуса вместо CDN)
             await CheckUrlAsync("Discord API", "https://discord.com/api/v9/gateway");
-            await CheckUrlAsync("Discord Media", "https://cdn.discordapp.com");
+            await CheckUrlAsync("Discord Status", "https://discordstatus.com");
 
-            // Проверяем YouTube
+            // Проверяем YouTube (Главная и скрипт плеера вместо googlevideo)
             await CheckUrlAsync("YouTube", "https://www.youtube.com");
-            await CheckUrlAsync("YouTube Video", "https://googlevideo.com");
+            await CheckUrlAsync("YouTube Player", "https://www.youtube.com/s/player/img/favicon_32.png");
 
             OnLog?.Invoke("=== Проверка завершена ===");
         }
@@ -268,26 +268,32 @@ namespace ZapretWPF
         {
             try
             {
-                using (var client = new HttpClient())
+                var handler = new HttpClientHandler
                 {
-                    // Таймаут 3 секунды, чтобы долго не ждать, если сайт заблокирован
-                    client.Timeout = TimeSpan.FromSeconds(3);
+                    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+                };
 
-                    // Добавляем обычный User-Agent, чтобы сервера не откидывали запрос
-                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                using (var client = new HttpClient(handler))
+                {
+                    // Таймаут 4 секунды
+                    client.Timeout = TimeSpan.FromSeconds(4);
+
+                    // Эмулируем настоящий браузер Chrome
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
                     Stopwatch sw = Stopwatch.StartNew();
                     HttpResponseMessage response = await client.GetAsync(url);
                     sw.Stop();
 
-                    if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    // Если сервер вернул что угодно (OK, Forbidden, NotFound, Unauthorized) — значит он ДОСТУПЕН!
+                    // Блокировка провайдера всегда выдает Таймаут или обрыв соединения.
+                    if ((int)response.StatusCode >= 200 && (int)response.StatusCode < 500)
                     {
-                        // 404 NotFound тоже считается успехом, так как сервер ответил!
-                        OnLog?.Invoke($"[🟢 УСПЕХ] {name} доступен! (Пинг: {sw.ElapsedMilliseconds} мс)");
+                        OnLog?.Invoke($"[🟢 УСПЕХ] {name} работает! (Пинг: {sw.ElapsedMilliseconds} мс)");
                     }
                     else
                     {
-                        OnLog?.Invoke($"[🟡 ОШИБКА] {name} вернул код {response.StatusCode}");
+                        OnLog?.Invoke($"[🟡 ПРЕДУПРЕЖДЕНИЕ] {name} ответил с кодом {(int)response.StatusCode}");
                     }
                 }
             }
@@ -297,7 +303,7 @@ namespace ZapretWPF
             }
             catch (Exception ex)
             {
-                OnLog?.Invoke($"[🔴 ОШИБКА] {name} недоступен: {ex.Message.Split('\n')[0]}");
+                OnLog?.Invoke($"[🔴 ЗАБЛОКИРОВАН] {name} недоступен: {ex.Message.Split('\n')[0]}");
             }
         }
 

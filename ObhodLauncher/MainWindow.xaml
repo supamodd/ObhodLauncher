@@ -43,14 +43,14 @@
                     <CheckBox x:Name="chkYouTube" Content="YouTube" IsChecked="True" Foreground="White" Margin="0,0,25,0" FontSize="14" VerticalAlignment="Center"/>
 
                     <TextBlock Text="Стратегия:" Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ComboBox x:Name="cmbStrategy" Width="260" SelectedIndex="5" FontSize="13">
+                    <ComboBox x:Name="cmbStrategy" Width="260" SelectedIndex="0" FontSize="13">
                         <ComboBoxItem Content="1. Flowseal (General)"/>
-                        <ComboBoxItem Content="2. Flowseal (ALT 1 - Fake)"/>
-                        <ComboBoxItem Content="3. Flowseal (ALT 2 - Disorder)"/>
-                        <ComboBoxItem Content="4. Flowseal (Fake TLS Auto)"/>
-                        <ComboBoxItem Content="5. SupaModd Custom (Макс. Пробив)"/>
-                        <ComboBoxItem Content="6. Flowseal (ALT 11 - Multisplit/TS)"/>
-                    </ComboBox>
+                        <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
+                        <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
+                        <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
+                        <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
+                        <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
+                    </ComboBox> 
                 </StackPanel>
 
                 <!-- Окно логов консоли -->

@@ -111,7 +111,6 @@ namespace ZapretWPF
             string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
             string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
-            // ОБЯЗАТЕЛЬНО ПРОБЕЛ В КОНЦЕ
             string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443 --wf-udp=443,19294-19344,50000-50100 ";
 
             switch (strategyIndex)
@@ -130,71 +129,73 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 1: // 2. Flowseal ALT 1 (Fake)
-                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --dpi-desync-udplen-pattern=0xDeadBeef --new ";
-                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new ";
+                case 1: // 2. Flowseal ALT (fakedsplit + ts)
+                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{bin}stun.bin\" --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
                     if (discord)
                     {
-                        args += $"--filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new ";
-                        args += $"--filter-tcp=443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new ";
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new ";
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     break;
 
-                case 2: // 3. Flowseal ALT 2 (Disorder)
-                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-udplen-increment=10 --dpi-desync-repeats=6 --new ";
-                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --new ";
+                case 2: // 3. Flowseal ALT 2 (multisplit pos=2)
+                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     if (discord)
                     {
-                        args += $"--filter-udp=50000-65535 --dpi-desync=anycast --dpi-desync-any-protocol --dpi-desync-cutoff=d3 --new ";
-                        args += $"--filter-tcp=443 --hostlist-domains=discord.media --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new ";
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,disorder2 --dpi-desync-autohost=sni --dpi-desync-fooling=md5sig --dpi-desync-split-seqovl=1 --new ";
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     break;
 
-                case 3: // 4. Flowseal Fake TLS
-                    args += $"--filter-tcp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-seqovl=1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-split-seqovl=1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
+                case 3: // 4. Flowseal ALT 3 (hostfakesplit)
+                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=ya.ru --dpi-desync-hostfakesplit-mod=host=ya.ru,altorder=1 --dpi-desync-fooling=ts --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
                     if (discord)
                     {
-                        args += $"--filter-udp=50000-65535 --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-hostfakesplit-mod=host=www.google.com,altorder=1 --dpi-desync-fooling=ts --new ";
+                    }
+                    if (youtube)
+                    {
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-hostfakesplit-mod=host=www.google.com,altorder=1 --dpi-desync-fooling=ts --new ";
                     }
                     break;
 
-                case 4: // 5. SupaModd Custom
-                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-udplen-increment=2 --dpi-desync-any-protocol --new ";
+                case 4: // 5. Flowseal FAKE TLS AUTO ALT
+                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
+                    if (discord)
+                    {
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
+                    }
+                    if (youtube)
+                    {
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
+                    }
+                    break;
+
+                case 5: // 6. SupaModd Custom (Макс. Пробив)
+                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
                     args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,disorder2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq,md5sig --dpi-desync-autohost=sni --new ";
                     if (discord)
                     {
-                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-udplen-increment=2 --dpi-desync-any-protocol --new ";
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=11 --new ";
                         args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,disorder2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq,md5sig --dpi-desync-autohost=sni --new ";
                     }
                     if (youtube)
                     {
                         args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,disorder2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq,md5sig --dpi-desync-autohost=sni --new ";
-                    }
-                    break;
-
-                case 5: // 6. Flowseal ALT 11 (Точная копия из general (ALT11).bat)
-                    args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=664 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-tls=\"{bin}stun.bin\" --dpi-desync-fake-tls=\"{bin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     break;
             }

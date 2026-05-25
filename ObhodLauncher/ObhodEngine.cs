@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace ZapretWPF
 {
@@ -245,6 +247,58 @@ namespace ZapretWPF
             }
 
             return args;
+        }
+
+        public async Task TestConnectionAsync()
+        {
+            OnLog?.Invoke("=== Запуск проверки соединения ===");
+
+            // Проверяем Discord
+            await CheckUrlAsync("Discord API", "https://discord.com/api/v9/gateway");
+            await CheckUrlAsync("Discord Media", "https://cdn.discordapp.com");
+
+            // Проверяем YouTube
+            await CheckUrlAsync("YouTube", "https://www.youtube.com");
+            await CheckUrlAsync("YouTube Video", "https://googlevideo.com");
+
+            OnLog?.Invoke("=== Проверка завершена ===");
+        }
+
+        private async Task CheckUrlAsync(string name, string url)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Таймаут 3 секунды, чтобы долго не ждать, если сайт заблокирован
+                    client.Timeout = TimeSpan.FromSeconds(3);
+
+                    // Добавляем обычный User-Agent, чтобы сервера не откидывали запрос
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+                    Stopwatch sw = Stopwatch.StartNew();
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    sw.Stop();
+
+                    if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // 404 NotFound тоже считается успехом, так как сервер ответил!
+                        OnLog?.Invoke($"[🟢 УСПЕХ] {name} доступен! (Пинг: {sw.ElapsedMilliseconds} мс)");
+                    }
+                    else
+                    {
+                        OnLog?.Invoke($"[🟡 ОШИБКА] {name} вернул код {response.StatusCode}");
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                OnLog?.Invoke($"[🔴 ЗАБЛОКИРОВАН] {name} не ответил (Таймаут).");
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[🔴 ОШИБКА] {name} недоступен: {ex.Message.Split('\n')[0]}");
+            }
         }
 
         private void RunAsAdmin(string fileName, string args)

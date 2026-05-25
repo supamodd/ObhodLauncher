@@ -386,7 +386,7 @@
                                     </TextBlock>
                                     <TextBlock Text="Пинг серверов" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                                     <TextBlock Text="Проверка доступности Discord и YouTube" TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
-                                    <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                    <Button Content="Проверить" Style="{StaticResource GlassButton}" Padding="10,8" Click="BtnTestConnection_Click"/>
                                 </StackPanel>
                             </Border>
 

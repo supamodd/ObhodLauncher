@@ -196,20 +196,18 @@ namespace ZapretWPF
                     break;
 
                 case 5: // 6. SupaModd Custom (Билайн / Регионы)
-                        // Надежный метод без экспериментальных флагов. 
-                        // Используем split2 с обманом (badseq) для TCP и anycast для UDP.
-
+                    // Убран несовместимый параметр autohost. Используем split2 + badseq.
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
 
                     if (discord)
                     {
                         args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-anycast --dpi-desync-cutoff=d3 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
                     }
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
                     }
                     break;
             }

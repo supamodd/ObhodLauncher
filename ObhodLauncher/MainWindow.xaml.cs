@@ -69,5 +69,31 @@ namespace ZapretWPF
             _engine.Stop();
             base.OnClosed(e);
         }
+
+        // --- МЕТОДЫ КАСТОМНОЙ ПАНЕЛИ УПРАВЛЕНИЯ ОКНОМ ---
+
+        // Перетаскивание окна за шапку
+        private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
+        // Сворачивание окна
+        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        // Закрытие окна
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            // Здесь в будущем можно будет добавить сворачивание в трей
+            // Если процесс запущен в режиме теста - остановим его перед выходом
+            _engine.Stop();
+            Close();
+        }
     }
 }

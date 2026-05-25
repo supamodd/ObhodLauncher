@@ -15,8 +15,8 @@
       <ZapretBinFiles Include="obhod-bin\**\*.*" />
       <ZapretListsFiles Include="obhod-lists\**\*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" />
-    <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" />
+	  <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
+	  <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

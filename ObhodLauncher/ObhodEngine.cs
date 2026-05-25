@@ -195,16 +195,18 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 5: // 6. SupaModd Custom (Билайн / Регионы)
-                    // Убрали anycast, так как его нет в v72.9
+                case 5: // 6. SupaModd Custom (Билайн / Регионы - Фикс Discord)
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
                     args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
 
                     if (discord)
                     {
-                        // Для дискорда (UDP) используем просто агрессивный fake-repeats=11 и any-protocol
-                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
-                        // Для TCP (медиа дискорда)
+                        // UDP (Голос). Фильтруем по l7 протоколам (discord,stun) и кормим DPI фейковыми бинарниками
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=11 --new ";
+                        // UDP (Голос). Fallback-правило для неопознанного UDP-трафика дискорда, добавляем инкремент размера, чтобы сбить сигнатуры
+                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-udplen-increment=2 --dpi-desync-any-protocol --new ";
+
+                        // TCP (Медиа)
                         args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
                     }
                     if (youtube)

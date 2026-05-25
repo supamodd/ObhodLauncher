@@ -116,6 +116,34 @@ namespace ZapretWPF
             }
         }
 
+        public void FlushDNS()
+        {
+            try
+            {
+                OnLog?.Invoke("=== Выполнение сброса сети ===");
+
+                // Выполняем очистку DNS
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/c ipconfig /flushdns",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                });
+
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                OnLog?.Invoke("Кэш DNS успешно очищен!");
+                OnLog?.Invoke("Рекомендуется перезапустить браузер или клиент Discord.");
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"Ошибка при сбросе сети: {ex.Message}");
+            }
+        }
+
         private string GetArguments(bool discord, bool youtube, int strategyIndex)
         {
             string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";

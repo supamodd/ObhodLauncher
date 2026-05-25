@@ -414,7 +414,7 @@
                                     </TextBlock>
                                     <TextBlock Text="Сброс сети" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                                     <TextBlock Text="Очистка кэша DNS для решения проблем" TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
-                                    <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                    <Button Content="Очистить" Style="{StaticResource GlassButton}" Padding="10,8" Click="BtnFlushDns_Click"/>
                                 </StackPanel>
                             </Border>
 

@@ -53,6 +53,15 @@ namespace ZapretWPF
             _engine.RemoveService();
         }
 
+        private void BtnFlushDns_Click(object sender, RoutedEventArgs e)
+        {
+            // Переключаем пользователя на первую вкладку (индекс 0), чтобы он увидел логи
+            ((System.Windows.Controls.TabControl)this.Content).SelectedIndex = 0;
+
+            // Вызываем метод сброса из движка
+            _engine.FlushDNS();
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             _engine.Stop();

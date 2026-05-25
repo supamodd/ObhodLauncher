@@ -1,107 +1,134 @@
 ﻿<Window x:Class="ZapretWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SupaModd Launcher" Height="550" Width="800"
-        Background="#18181b" Foreground="#e0e0e0"
+        Title="SupaModd Launcher" Height="580" Width="840"
         WindowStartupLocation="CenterScreen"
-        FontFamily="Segoe UI">
+        FontFamily="Segoe UI"
+        WindowStyle="SingleBorderWindow"
+        AllowsTransparency="False"
+        Background="#0f0f13">
 
+    <!-- Глобальные ресурсы для Glass-эффекта и кнопок -->
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentColor" Color="#8b5cf6"/>
-        <SolidColorBrush x:Key="AccentColorHover" Color="#7c3aed"/>
-        <SolidColorBrush x:Key="BgColor" Color="#18181b"/>
-        <SolidColorBrush x:Key="CardColor" Color="#27272a"/>
+        <!-- Полупрозрачные цвета для эффекта стекла -->
+        <SolidColorBrush x:Key="GlassBg" Color="#9918181b"/>
+        <!-- 60% прозрачность -->
+        <SolidColorBrush x:Key="GlassBorder" Color="#33ffffff"/>
+        <!-- Тонкая светлая рамка -->
 
-        <!-- Базовый шаблон для кнопок -->
-        <ControlTemplate x:Key="ButtonTemplate" TargetType="Button">
-            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+        <!-- Акцентные цвета -->
+        <SolidColorBrush x:Key="AccentColor" Color="#8b5cf6"/>
+        <SolidColorBrush x:Key="AccentColorHover" Color="#a78bfa"/>
+
+        <!-- Базовый шаблон для кнопок (Стекло) -->
+        <ControlTemplate x:Key="GlassButtonTemplate" TargetType="Button">
+            <Border x:Name="border" Background="#26ffffff" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="border" Property="Background" Value="#3f3f46"/>
+                    <Setter TargetName="border" Property="Background" Value="#33ffffff"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter TargetName="border" Property="Background" Value="#52525b"/>
+                    <Setter TargetName="border" Property="Background" Value="#1affffff"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <Style x:Key="ModernButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource CardColor}"/>
+        <!-- Обычная кнопка -->
+        <Style x:Key="GlassButton" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Padding" Value="20,10"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
+            <Setter Property="Template" Value="{StaticResource GlassButtonTemplate}"/>
         </Style>
 
+        <!-- Акцентная кнопка -->
         <ControlTemplate x:Key="AccentButtonTemplate" TargetType="Button">
-            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+            <Border x:Name="border" Background="{StaticResource AccentColor}" CornerRadius="8" Padding="{TemplateBinding Padding}">
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter TargetName="border" Property="Background" Value="{StaticResource AccentColorHover}"/>
+                    <Setter TargetName="border" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#8b5cf6" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                        </Setter.Value>
+                    </Setter>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter TargetName="border" Property="Background" Value="#6d28d9"/>
+                    <Setter TargetName="border" Property="Background" Value="#7c3aed"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-            <Setter Property="Background" Value="{StaticResource AccentColor}"/>
+        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
             <Setter Property="Template" Value="{StaticResource AccentButtonTemplate}"/>
         </Style>
 
+        <!-- Кнопка Остановки (Красная) -->
         <ControlTemplate x:Key="DangerButtonTemplate" TargetType="Button">
-            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+            <Border x:Name="border" Background="#ef4444" CornerRadius="8" Padding="{TemplateBinding Padding}">
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#f87171"/>
+                    <Setter TargetName="border" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#ef4444" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
                     <Setter TargetName="border" Property="Background" Value="#dc2626"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
-        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-            <Setter Property="Background" Value="#ef4444"/>
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource GlassButton}">
             <Setter Property="Template" Value="{StaticResource DangerButtonTemplate}"/>
         </Style>
 
-        <!-- КРАСИВЫЙ АНИМИРОВАННЫЙ TOGGLE SWITCH -->
-        <!-- Решение проблемы XDG0006: мы используем storyboard для переключения X-позиции! -->
+        <!-- Анимированный Toggle Switch -->
         <ControlTemplate x:Key="ToggleSwitchTemplate" TargetType="CheckBox">
             <StackPanel Orientation="Horizontal" Background="Transparent">
-                <Border x:Name="SwitchBg" Width="40" Height="22" CornerRadius="11" Background="#3f3f46" VerticalAlignment="Center">
+                <Border x:Name="SwitchBg" Width="44" Height="24" CornerRadius="12" Background="#40ffffff" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" VerticalAlignment="Center">
                     <Ellipse x:Name="SwitchThumb" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0">
                         <Ellipse.RenderTransform>
                             <TranslateTransform x:Name="ThumbTranslate" X="0"/>
                         </Ellipse.RenderTransform>
                     </Ellipse>
                 </Border>
-                <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+                <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsChecked" Value="True">
                     <Setter TargetName="SwitchBg" Property="Background" Value="{StaticResource AccentColor}"/>
+                    <Setter TargetName="SwitchBg" Property="BorderThickness" Value="0"/>
                 </Trigger>
-                <!-- Плавная анимация переключателя с использованием Storyboard, это работает без ошибок -->
                 <EventTrigger RoutedEvent="CheckBox.Checked">
                     <BeginStoryboard>
                         <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="18" Duration="0:0:0.15"/>
+                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="20" Duration="0:0:0.2">
+                                <DoubleAnimation.EasingFunction>
+                                    <QuadraticEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
                 <EventTrigger RoutedEvent="CheckBox.Unchecked">
                     <BeginStoryboard>
                         <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.15"/>
+                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.2">
+                                <DoubleAnimation.EasingFunction>
+                                    <QuadraticEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
@@ -116,18 +143,17 @@
             <Setter Property="Template" Value="{StaticResource ToggleSwitchTemplate}"/>
         </Style>
 
-        <!-- ПРАВИЛЬНЫЙ ШАБЛОН ДЛЯ ВКЛАДОК (Решение ошибки XDG0010) -->
+        <!-- Шаблон для парящих вкладок -->
         <ControlTemplate x:Key="TabItemTemplate" TargetType="TabItem">
-            <Border Name="Border" Padding="20,12" Margin="0,0,5,0" Background="Transparent" CornerRadius="8,8,0,0" BorderThickness="0,0,0,3" BorderBrush="Transparent">
+            <Border Name="Border" Padding="25,12" Margin="0,0,10,0" Background="Transparent" CornerRadius="8">
                 <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentColor}"/>
-                    <Setter TargetName="Border" Property="Background" Value="{StaticResource CardColor}"/>
+                    <Setter TargetName="Border" Property="Background" Value="#33ffffff"/>
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Border" Property="Background" Value="#27272a"/>
+                    <Setter TargetName="Border" Property="Background" Value="#1affffff"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -136,6 +162,7 @@
             <Setter Property="Foreground" Value="#a1a1aa"/>
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template" Value="{StaticResource TabItemTemplate}"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
@@ -143,121 +170,171 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
     </Window.Resources>
 
+    <!-- Фон окна со светящимися "пятнами" на заднем плане (создает глубину) -->
     <Grid>
-        <!-- Верхняя шапка с заголовком -->
-        <Grid Height="60" VerticalAlignment="Top" Background="{StaticResource CardColor}">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
-                <TextBlock Text="🚀" FontSize="24" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                <TextBlock Text="SupaModd Launcher" FontSize="22" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                <TextBlock Text="v1.0" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource AccentColor}" VerticalAlignment="Bottom" Margin="10,0,0,4"/>
-            </StackPanel>
-        </Grid>
+        <!-- Темный фон -->
+        <Rectangle Fill="#09090b"/>
+        <!-- Фиолетовое свечение сверху слева -->
+        <Rectangle Margin="-200,-200,0,0" Width="600" Height="600" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0.15">
+            <Rectangle.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#8b5cf6" Offset="0"/>
+                    <GradientStop Color="Transparent" Offset="1"/>
+                </RadialGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Синее свечение снизу справа -->
+        <Rectangle Margin="0,0,-200,-200" Width="500" Height="500" HorizontalAlignment="Right" VerticalAlignment="Bottom" Opacity="0.1">
+            <Rectangle.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#3b82f6" Offset="0"/>
+                    <GradientStop Color="Transparent" Offset="1"/>
+                </RadialGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
 
-        <!-- Основной контент со вкладками -->
-        <TabControl Background="Transparent" BorderThickness="0" Margin="15,75,15,15">
+        <!-- Основной контент -->
+        <Grid>
+            <!-- Верхняя шапка (Стекло) -->
+            <Border Height="70" VerticalAlignment="Top" Background="#80000000" BorderBrush="{StaticResource GlassBorder}" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="25,0,0,0">
+                    <TextBlock Text="🚀" FontSize="26" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="SupaModd Launcher" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                    <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Margin="15,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="v1.0" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}"/>
+                    </Border>
+                </StackPanel>
+            </Border>
 
-            <!-- ВКЛАДКА 1: ОБХОД DPI -->
-            <TabItem Header="Обход DPI">
-                <Grid Margin="5,15,5,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+            <!-- Основной TabControl -->
+            <TabControl Background="Transparent" BorderThickness="0" Margin="20,90,20,20">
 
-                    <!-- Панель управления -->
-                    <Border Background="{StaticResource CardColor}" CornerRadius="10" Padding="20">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                <!-- ВКЛАДКА 1: ОБХОД DPI -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Обход DPI" FontSize="16" FontWeight="SemiBold" Padding="10,2"/>
+                    </TabItem.Header>
+                    <Grid Margin="0,20,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                            <!-- Переключатели (Теперь с плавной анимацией!) -->
-                            <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,30,0">
-                                <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
-                                <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}"/>
+                        <!-- Панель управления (Стеклянная карточка) -->
+                        <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="12" Padding="25">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Переключатели -->
+                                <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,40,0">
+                                    <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,20"/>
+                                    <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}"/>
+                                </StackPanel>
+
+                                <!-- Выбор стратегии -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="14" Margin="0,0,0,8"/>
+
+                                    <!-- Стилизация комбобокса (базовая, т.к. фулл-стайлинг ComboBox в WPF занимает 100 строк) -->
+                                    <ComboBox x:Name="cmbStrategy" Height="40" FontSize="15" SelectedIndex="5" Padding="15,8" Background="#26ffffff" Foreground="Black">
+                                        <ComboBoxItem Content="1. Flowseal (General)"/>
+                                        <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
+                                        <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
+                                        <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
+                                        <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
+                                        <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="Логи консоли:" Foreground="#a1a1aa" FontSize="14" Margin="5,20,0,8"/>
+
+                        <!-- Окно логов консоли (Мягкий темный фон внутри стекла) -->
+                        <Border Grid.Row="2" Background="#80000000" CornerRadius="10" BorderThickness="1" BorderBrush="#26ffffff">
+                            <TextBox x:Name="txtLogs" Background="Transparent" Foreground="#a78bfa" 
+                                     IsReadOnly="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                                     FontFamily="Consolas" BorderThickness="0" Padding="15" FontSize="14"/>
+                        </Border>
+
+                        <!-- Нижние кнопки -->
+                        <Grid Grid.Row="3" Margin="0,20,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                <Button Content="▶ Тест в окне" Width="140" Style="{StaticResource AccentButton}" Margin="0,0,15,0" Click="BtnStart_Click"/>
+                                <Button Content="⏹ Остановить тест" Width="140" Style="{StaticResource GlassButton}" Click="BtnStop_Click"/>
                             </StackPanel>
 
-                            <!-- Выбор стратегии -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,5"/>
-                                <ComboBox x:Name="cmbStrategy" Height="35" FontSize="14" SelectedIndex="5" Padding="10,5">
-                                    <ComboBoxItem Content="1. Flowseal (General)"/>
-                                    <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
-                                    <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
-                                    <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
-                                    <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
-                                    <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
-                                </ComboBox>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="🛡 Установить Службу" Width="190" Style="{StaticResource GlassButton}" Margin="0,0,15,0" Click="BtnInstallService_Click"/>
+                                <Button Content="Удалить Службу" Width="150" Style="{StaticResource DangerButton}" Click="BtnRemoveService_Click"/>
                             </StackPanel>
                         </Grid>
-                    </Border>
+                    </Grid>
+                </TabItem>
 
-                    <!-- Заголовок логов -->
-                    <TextBlock Grid.Row="1" Text="Логи системы (Консоль):" Foreground="#a1a1aa" FontSize="13" Margin="5,15,0,5"/>
+                <!-- ВКЛАДКА 2: ДОП ФУНКЦИИ -->
+                <TabItem>
+                    <TabItem.Header>
+                        <TextBlock Text="Инструменты" FontSize="16" FontWeight="SemiBold" Padding="10,2"/>
+                    </TabItem.Header>
+                    <Grid Margin="0,20,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0">
 
-                    <!-- Окно логов консоли -->
-                    <Border Grid.Row="2" Background="#09090b" CornerRadius="8" BorderThickness="1" BorderBrush="#3f3f46">
-                        <TextBox x:Name="txtLogs" Background="Transparent" Foreground="#4ade80" 
-                                 IsReadOnly="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                                 FontFamily="Consolas" BorderThickness="0" Padding="15" FontSize="13"/>
-                    </Border>
+                            <!-- Карточка 1 -->
+                            <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="240" Height="220" Margin="0,0,25,0" Padding="25">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="🌐" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock Text="Пинг серверов" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Проверка доступности Discord и YouTube" TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
+                                    <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                </StackPanel>
+                            </Border>
 
-                    <!-- Нижние кнопки -->
-                    <Grid Grid.Row="3" Margin="0,15,0,0">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                            <Button Content="▶ Тест в окне" Width="130" Style="{StaticResource AccentButton}" Margin="0,0,10,0" Click="BtnStart_Click"/>
-                            <Button Content="⏹ Остановить тест" Width="130" Style="{StaticResource ModernButton}" Click="BtnStop_Click"/>
-                        </StackPanel>
+                            <!-- Карточка 2 -->
+                            <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="240" Height="220" Margin="0,0,25,0" Padding="25">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="🔄" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock Text="Обновить списки" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Скачать актуальные домены с GitHub" TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
+                                    <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                </StackPanel>
+                            </Border>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="🛡 Установить Службу" Width="170" Style="{StaticResource ModernButton}" Margin="0,0,10,0" Click="BtnInstallService_Click"/>
-                            <Button Content="Удалить Службу" Width="130" Style="{StaticResource DangerButton}" Click="BtnRemoveService_Click"/>
+                            <!-- Карточка 3 -->
+                            <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="240" Height="220" Padding="25">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="🧹" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    <TextBlock Text="Сброс сети" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Очистка кэша DNS для решения проблем" TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
+                                    <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                </StackPanel>
+                            </Border>
+
                         </StackPanel>
                     </Grid>
-                </Grid>
-            </TabItem>
+                </TabItem>
 
-            <!-- ВКЛАДКА 2: ДОП ФУНКЦИИ -->
-            <TabItem Header="Инструменты">
-                <Grid Margin="5,15,5,0">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,50,0,0">
-
-                        <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Margin="0,0,20,0" Padding="20">
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="🌐" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                <TextBlock Text="Тест соединения" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                                <TextBlock Text="Быстрая проверка серверов Discord и YouTube." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" Margin="0,0,0,15"/>
-                                <Button Content="Скоро" Style="{StaticResource ModernButton}" IsEnabled="False"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Margin="0,0,20,0" Padding="20">
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="🔄" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                <TextBlock Text="Обновление списков" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                                <TextBlock Text="Скачивание актуальных доменов с GitHub." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" Margin="0,0,0,15"/>
-                                <Button Content="Скоро" Style="{StaticResource ModernButton}" IsEnabled="False"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Background="{StaticResource CardColor}" CornerRadius="10" Width="220" Height="200" Padding="20">
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="🧹" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                <TextBlock Text="Сброс сети" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                                <TextBlock Text="Очистка кэша DNS (flushdns) для решения проблем." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" Margin="0,0,0,15"/>
-                                <Button Content="Скоро" Style="{StaticResource ModernButton}" IsEnabled="False"/>
-                            </StackPanel>
-                        </Border>
-
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-
-        </TabControl>
+            </TabControl>
+        </Grid>
     </Grid>
 </Window>

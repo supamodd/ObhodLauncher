@@ -27,10 +27,8 @@ namespace ZapretWPF
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
 
-            // Получаем индекс выбранной стратегии из ComboBox
             int strategy = cmbStrategy.SelectedIndex;
 
-            // Обязательно вызываем метод с 3 аргументами!
             _engine.Start(discord, youtube, strategy);
         }
 
@@ -70,9 +68,18 @@ namespace ZapretWPF
             base.OnClosed(e);
         }
 
+        private async void BtnUpdateLists_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as System.Windows.Controls.Button;
+            if (btn != null) btn.IsEnabled = false;
+
+            await _engine.UpdateListsAsync();
+
+            if (btn != null) btn.IsEnabled = true;
+        }
+
         // --- МЕТОДЫ КАСТОМНОЙ ПАНЕЛИ УПРАВЛЕНИЯ ОКНОМ ---
 
-        // Перетаскивание окна за шапку
         private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
@@ -81,17 +88,13 @@ namespace ZapretWPF
             }
         }
 
-        // Сворачивание окна
         private void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
         }
 
-        // Закрытие окна
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            // Здесь в будущем можно будет добавить сворачивание в трей
-            // Если процесс запущен в режиме теста - остановим его перед выходом
             _engine.Stop();
             Close();
         }

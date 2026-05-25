@@ -441,7 +441,7 @@
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5,15,0,5">
                                 <TextBlock Text="Логи системы:" Foreground="#a1a1aa" FontSize="14" VerticalAlignment="Center"/>
                                 <Button Content="🌐 Пинг" Style="{StaticResource GlassButton}" Padding="15,4" Margin="15,0,0,0" FontSize="12" Click="BtnTestConnection_Click"/>
-                                <Button Content="🔄 Обновить списки" Style="{StaticResource GlassButton}" Padding="15,4" Margin="10,0,0,0" FontSize="12" IsEnabled="False"/>
+                                <Button Content="🔄 Обновить списки" Style="{StaticResource GlassButton}" Padding="15,4" Margin="10,0,0,0" FontSize="12" Click="BtnUpdateLists_Click"/>
                             </StackPanel>
 
                             <Border Grid.Row="2" Background="#80000000" CornerRadius="10" BorderThickness="1" BorderBrush="#26ffffff">

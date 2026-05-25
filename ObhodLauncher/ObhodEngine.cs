@@ -307,6 +307,63 @@ namespace ZapretWPF
             }
         }
 
+        public async Task UpdateListsAsync()
+        {
+            OnLog?.Invoke("=== Начало обновления списков с GitHub ===");
+            string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
+
+            if (!Directory.Exists(listsPath))
+            {
+                Directory.CreateDirectory(listsPath);
+            }
+
+            // Базовый URL репозитория Flowseal (raw-формат для скачивания файлов)
+            string baseUrl = "https://raw.githubusercontent.com/Flowseal/zapret-discord-youtube/main/lists/";
+
+            // Список файлов, которые мы хотим обновить
+            string[] filesToDownload = {
+                "list-general.txt",
+                "list-google.txt",
+                "list-exclude.txt",
+                "ipset-all.txt",
+                "ipset-exclude.txt"
+            };
+
+            using (var client = new HttpClient())
+            {
+                // Игнорируем кэширование браузера
+                client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SupaModd/1.0");
+
+                // Включаем поддержку TLS 1.2 (иногда без этого Github может откинуть запрос)
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
+                foreach (string file in filesToDownload)
+                {
+                    try
+                    {
+                        OnLog?.Invoke($"Скачивание {file}...");
+                        string fileUrl = baseUrl + file;
+                        string savePath = Path.Combine(listsPath, file);
+
+                        // Скачиваем содержимое файла
+                        string content = await client.GetStringAsync(fileUrl);
+
+                        // Сохраняем поверх старого
+                        File.WriteAllText(savePath, content);
+                        OnLog?.Invoke($"[✓] {file} успешно обновлен!");
+                    }
+                    catch (Exception ex)
+                    {
+                        OnLog?.Invoke($"[✗] Ошибка при скачивании {file}: {ex.Message}");
+                    }
+                }
+            }
+
+            OnLog?.Invoke("=== Обновление списков завершено ===");
+            OnLog?.Invoke("Внимание: Изменения вступят в силу после перезапуска обхода (или переустановки Службы).");
+        }
+
         private void RunAsAdmin(string fileName, string args)
         {
             var process = Process.Start(new ProcessStartInfo

@@ -186,18 +186,23 @@ namespace ZapretWPF
                     break;
 
                 case 5: // 6. SupaModd Custom (Специально для Билайн/Ростелеком)
-                    // Мощный метод обхода DPI для сложных провайдеров (Beeline) с использованием multidisorder и syndata
+                        // Для Билайна мы используем syndata,split2 на уровне IPv4, так как стандартный disorder часто сбрасывает TCP сессии
+
+                    // Блок для базового HTTPS (YouTube + прочее)
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,multidisorder --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --new ";
+                    args += $"--wf-l3=ipv4 --filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
 
                     if (discord)
                     {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multidisorder --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                        // Для дискорда (UDP) используем anycast и d3 cutoff, это помогает против агрессивного шейпинга
+                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-anycast --dpi-desync-cutoff=d3 --new ";
+                        // Для TCP (медиа дискорда)
+                        args += $"--wf-l3=ipv4 --filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,multidisorder --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --new ";
+                        // Ютуб
+                        args += $"--wf-l3=ipv4 --filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
                     }
                     break;
             }

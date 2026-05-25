@@ -36,14 +36,24 @@ namespace ZapretWPF
                     }
                 };
 
+                // Читаем логи и ошибки
                 _winwsProcess.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) OnLog?.Invoke(e.Data); };
-                _winwsProcess.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) OnLog?.Invoke("ERROR: " + e.Data); };
+                _winwsProcess.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) OnLog?.Invoke("ОШИБКА WINWS: " + e.Data); };
 
                 _winwsProcess.Start();
                 _winwsProcess.BeginOutputReadLine();
                 _winwsProcess.BeginErrorReadLine();
 
-                OnLog?.Invoke("=== Обход успешно запущен (Тест) ===");
+                // Проверяем, не крашнулся ли он мгновенно (в течение 500мс)
+                if (_winwsProcess.WaitForExit(500))
+                {
+                    OnLog?.Invoke($"[КРИТИЧЕСКАЯ ОШИБКА] winws.exe мгновенно закрылся (Код: {_winwsProcess.ExitCode}). Проверьте логи выше, возможно параметр не поддерживается.");
+                    _winwsProcess = null;
+                }
+                else
+                {
+                    OnLog?.Invoke("=== Обход успешно запущен (Тест) ===");
+                }
             }
             catch (Exception ex)
             {
@@ -185,24 +195,21 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 5: // 6. SupaModd Custom (Специально для Билайн/Ростелеком)
-                        // Для Билайна мы используем syndata,split2 на уровне IPv4, так как стандартный disorder часто сбрасывает TCP сессии
+                case 5: // 6. SupaModd Custom (Билайн / Регионы)
+                        // Надежный метод без экспериментальных флагов. 
+                        // Используем split2 с обманом (badseq) для TCP и anycast для UDP.
 
-                    // Блок для базового HTTPS (YouTube + прочее)
                     args += $"--filter-udp=443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--wf-l3=ipv4 --filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 --hostlist=\"{lists}list-general.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
 
                     if (discord)
                     {
-                        // Для дискорда (UDP) используем anycast и d3 cutoff, это помогает против агрессивного шейпинга
                         args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-anycast --dpi-desync-cutoff=d3 --new ";
-                        // Для TCP (медиа дискорда)
-                        args += $"--wf-l3=ipv4 --filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
                     }
                     if (youtube)
                     {
-                        // Ютуб
-                        args += $"--wf-l3=ipv4 --filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=syndata,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --dpi-desync-autohost=sni --new ";
                     }
                     break;
             }

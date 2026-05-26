@@ -514,9 +514,36 @@
                             <TextBlock Text="Другое" FontSize="16" FontWeight="SemiBold" Padding="10,2"/>
                         </TabItem.Header>
                         <Grid Margin="0,20,0,0">
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Text="Здесь будет обход блокировки Telegram" FontSize="20" FontWeight="Bold" Foreground="#a1a1aa" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                <TextBlock Text="и другие функции..." FontSize="16" Foreground="#666" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0">
+
+                                <!-- Карточка: Instagram -->
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="260" Height="220" Margin="0,0,25,0" Padding="25">
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="📸" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
+                                        <TextBlock Text="Обход Instagram" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Добавляет актуальные IP-адреса CDN Инстаграма в системный файл hosts." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="12" Margin="0,0,0,20"/>
+                                        <Button Content="Установить патч" Style="{StaticResource AccentButton}" Padding="10,8" Click="BtnPatchInstagram_Click"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Карточка: Telegram (Заготовка) -->
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="260" Height="220" Padding="25">
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="✈️" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
+                                        <TextBlock Text="Обход Telegram" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Специальные маршруты для Telegram (скоро)." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="12" Margin="0,0,0,20"/>
+                                        <Button Content="Скоро" Style="{StaticResource GlassButton}" IsEnabled="False" Padding="10,8"/>
+                                    </StackPanel>
+                                </Border>
+
                             </StackPanel>
                         </Grid>
                     </TabItem>

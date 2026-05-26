@@ -413,6 +413,54 @@ namespace ZapretWPF
             }
         }
 
+        public void PatchInstagramHosts()
+        {
+            try
+            {
+                OnLog?.Invoke("=== Установка обхода для Instagram ===");
+                OnLog?.Invoke("Добавление чистых IP-адресов Meta/Instagram в файл hosts...");
+
+                // Актуальные незаблокированные IP-адреса CDN Инстаграма и Фейсбука (на 2025/2026 год)
+                string hostsPatch = @"
+# --- SUPAMODD INSTAGRAM BYPASS ---
+57.144.244.34 instagram.com www.instagram.com
+57.144.244.192 static.cdninstagram.com graph.instagram.com i.instagram.com api.instagram.com edge-chat.instagram.com
+57.144.244.1 fbcdn.net facebook.com fb.com fbsbx.com
+31.13.66.63 scontent-hel3-1.cdninstagram.com scontent.cdninstagram.com
+57.144.244.128 static.xx.fbcdn.net scontent.xx.fbcdn.net
+31.13.67.20 scontent-hel3-1.xx.fbcdn.net
+# --- END SUPAMODD INSTAGRAM BYPASS ---
+";
+
+                // PowerShell скрипт: безопасно дописывает строки в hosts, если их там еще нет
+                string psCommand = $@"
+$hostsPath = 'C:\Windows\System32\drivers\etc\hosts'
+$currentHosts = Get-Content $hostsPath -Raw
+if ($currentHosts -notmatch 'SUPAMODD INSTAGRAM BYPASS') {{
+    Add-Content -Path $hostsPath -Value '{hostsPatch.Replace("\r\n", "`r`n")}'
+}}
+";
+
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+                    UseShellExecute = true,
+                    Verb = "runas", // Нужны права админа для изменения системного файла
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
+
+                process?.WaitForExit();
+
+                OnLog?.Invoke("[✓] Файл hosts успешно пропатчен! Instagram и FB должны работать.");
+                OnLog?.Invoke("ВНИМАНИЕ: Для работы также должна быть запущена любая стратегия обхода DPI.");
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[✗] Ошибка при прошивке hosts: {ex.Message}");
+            }
+        }
+
         private void RunAsAdmin(string fileName, string args)
         {
             var process = Process.Start(new ProcessStartInfo

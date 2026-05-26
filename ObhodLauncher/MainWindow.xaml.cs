@@ -111,6 +111,12 @@ namespace ZapretWPF
             }
         }
 
+        private void BtnPatchInstagram_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainTabControl != null) MainTabControl.SelectedIndex = 0;
+            _engine.PatchInstagramHosts();
+        }
+
         private void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;

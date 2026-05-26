@@ -420,43 +420,62 @@ namespace ZapretWPF
                 OnLog?.Invoke("=== Установка обхода для Instagram ===");
                 OnLog?.Invoke("1. Добавление чистых IP-адресов Meta в файл hosts...");
 
-                string hostsPatch = @"
-# --- SUPAMODD INSTAGRAM BYPASS ---
-57.144.244.34 instagram.com www.instagram.com
-57.144.244.192 static.cdninstagram.com graph.instagram.com i.instagram.com api.instagram.com edge-chat.instagram.com
-57.144.244.1 fbcdn.net facebook.com fb.com fbsbx.com
-31.13.66.63 scontent-hel3-1.cdninstagram.com scontent.cdninstagram.com
-57.144.244.128 static.xx.fbcdn.net scontent.xx.fbcdn.net
-31.13.67.20 scontent-hel3-1.xx.fbcdn.net
-# --- END SUPAMODD INSTAGRAM BYPASS ---
-";
-                string psCommand = $@"
-$hostsPath = 'C:\Windows\System32\drivers\etc\hosts'
-$currentHosts = Get-Content $hostsPath -Raw
-if ($currentHosts -notmatch 'SUPAMODD INSTAGRAM BYPASS') {{
-    Add-Content -Path $hostsPath -Value '{hostsPatch.Replace("\r\n", "`r`n")}'
-}}
-";
+                string hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
 
-                var process = Process.Start(new ProcessStartInfo
+                string hostsPatch =
+                    Environment.NewLine + "# --- SUPAMODD INSTAGRAM BYPASS ---" + Environment.NewLine +
+                    "57.144.244.34 instagram.com www.instagram.com" + Environment.NewLine +
+                    "57.144.244.192 static.cdninstagram.com graph.instagram.com i.instagram.com api.instagram.com edge-chat.instagram.com" + Environment.NewLine +
+                    "57.144.244.1 fbcdn.net facebook.com fb.com fbsbx.com" + Environment.NewLine +
+                    "31.13.66.63 scontent-hel3-1.cdninstagram.com scontent.cdninstagram.com" + Environment.NewLine +
+                    "57.144.244.128 static.xx.fbcdn.net scontent.xx.fbcdn.net" + Environment.NewLine +
+                    "31.13.67.20 scontent-hel3-1.xx.fbcdn.net" + Environment.NewLine +
+                    "# --- END SUPAMODD INSTAGRAM BYPASS ---" + Environment.NewLine;
+
+                // Читаем текущий файл
+                string currentHosts = "";
+                if (File.Exists(hostsPath))
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
-                    UseShellExecute = true,
-                    Verb = "runas",
-                    WindowStyle = ProcessWindowStyle.Hidden
-                });
+                    currentHosts = File.ReadAllText(hostsPath);
+                }
 
+                // Проверяем, нет ли уже нашего патча
+                if (!currentHosts.Contains("SUPAMODD INSTAGRAM BYPASS"))
+                {
+                    // Записываем прямо через C# (без PowerShell!)
+                    File.AppendAllText(hostsPath, hostsPatch);
+                    OnLog?.Invoke("[✓] Файл hosts успешно пропатчен!");
+                }
+                else
+                {
+                    OnLog?.Invoke("[✓] Файл hosts уже содержит патч для Instagram.");
+                }
 
+                // ШАГ 2: Добавляем инсту в локальный список winws.exe, чтобы DPI-обход к ним применялся
+                OnLog?.Invoke("2. Настройка маршрутов DPI для Instagram...");
 
-                process?.WaitForExit();
+                string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
+                string userListPath = Path.Combine(listsPath, "list-general-user.txt");
 
-                OnLog?.Invoke("[✓] Файл hosts успешно пропатчен! Instagram и FB должны работать.");
-                OnLog?.Invoke("ВНИМАНИЕ: Для работы также должна быть запущена любая стратегия обхода DPI.");
+                if (File.Exists(userListPath))
+                {
+                    string currentUserList = File.ReadAllText(userListPath);
+                    if (!currentUserList.Contains("instagram.com"))
+                    {
+                        string instaDomains = Environment.NewLine + "instagram.com" + Environment.NewLine + "cdninstagram.com" + Environment.NewLine + "facebook.com" + Environment.NewLine + "fbcdn.net";
+                        File.AppendAllText(userListPath, instaDomains);
+                        OnLog?.Invoke("[✓] Домены добавлены в список DPI обхода.");
+                    }
+                }
+
+                OnLog?.Invoke("=== Установка завершена ===");
+                OnLog?.Invoke("ОБЯЗАТЕЛЬНО нажмите 'Сброс сети' на второй вкладке, чтобы очистить кэш старых IP.");
+                OnLog?.Invoke("Instagram будет работать ТОЛЬКО при включенном обходе (кнопка 'Тест' или 'Служба').");
             }
             catch (Exception ex)
             {
                 OnLog?.Invoke($"[✗] Ошибка при прошивке hosts: {ex.Message}");
+                OnLog?.Invoke("Убедитесь, что ваш антивирус не блокирует изменение файла hosts.");
             }
         }
 

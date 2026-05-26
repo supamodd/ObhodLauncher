@@ -121,12 +121,25 @@ namespace ZapretWPF
             string tgIpsetPath = Path.Combine(listsPath, "ipset-telegram.txt");
             if (!File.Exists(tgIpsetPath))
             {
-                // Официальные ASN Телеграма: AS59930, AS44907, AS62014, AS62041, AS211157
+                // Полный список сетей Telegram (ASN + доп. адреса для Desktop клиента)
                 string tgSubnets =
                     "91.108.4.0/22\n91.108.8.0/22\n91.108.12.0/22\n91.108.16.0/22\n91.108.20.0/22\n" +
                     "91.108.56.0/22\n91.108.192.0/22\n149.154.160.0/20\n149.154.164.0/22\n149.154.168.0/22\n" +
-                    "149.154.172.0/22\n185.76.151.0/24\n95.161.76.0/23";
+                    "149.154.172.0/22\n185.76.151.0/24\n95.161.76.0/23\n" +
+                    "104.244.72.0/24\n104.244.73.0/24\n104.244.74.0/24"; // Добавили CDN подсети для обновления desktop
                 File.WriteAllText(tgIpsetPath, tgSubnets);
+            }
+
+            // Добавляем домены Telegram в общий список обхода, если пользователь включил галку
+            string userListPath = Path.Combine(listsPath, "list-general-user.txt");
+            if (File.Exists(userListPath))
+            {
+                string currentUserList = File.ReadAllText(userListPath);
+                if (!currentUserList.Contains("telegram.org"))
+                {
+                    string tgDomains = Environment.NewLine + "telegram.org" + Environment.NewLine + "desktop.telegram.org" + Environment.NewLine + "web.telegram.org" + Environment.NewLine + "t.me";
+                    File.AppendAllText(userListPath, tgDomains);
+                }
             }
         }
 
@@ -257,10 +270,9 @@ namespace ZapretWPF
 
             if (telegram)
             {
-                // Порты Telegram: 443, 80 (HTTP/TCP), иногда 5222.
-                // Применяем split2 + badseq для обхода замедления MTProto (TCP) по IP адресам
-                args += $"--filter-tcp=80,443,5222 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new ";
-                // Для звонков Telegram (UDP 443) применяем fake
+                args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake,disorder2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
+
+                // Для звонков Telegram (UDP)
                 args += $"--filter-udp=443 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
             }
 

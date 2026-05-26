@@ -418,9 +418,8 @@ namespace ZapretWPF
             try
             {
                 OnLog?.Invoke("=== Установка обхода для Instagram ===");
-                OnLog?.Invoke("Добавление чистых IP-адресов Meta/Instagram в файл hosts...");
+                OnLog?.Invoke("1. Добавление чистых IP-адресов Meta в файл hosts...");
 
-                // Актуальные незаблокированные IP-адреса CDN Инстаграма и Фейсбука (на 2025/2026 год)
                 string hostsPatch = @"
 # --- SUPAMODD INSTAGRAM BYPASS ---
 57.144.244.34 instagram.com www.instagram.com
@@ -431,8 +430,6 @@ namespace ZapretWPF
 31.13.67.20 scontent-hel3-1.xx.fbcdn.net
 # --- END SUPAMODD INSTAGRAM BYPASS ---
 ";
-
-                // PowerShell скрипт: безопасно дописывает строки в hosts, если их там еще нет
                 string psCommand = $@"
 $hostsPath = 'C:\Windows\System32\drivers\etc\hosts'
 $currentHosts = Get-Content $hostsPath -Raw
@@ -446,9 +443,11 @@ if ($currentHosts -notmatch 'SUPAMODD INSTAGRAM BYPASS') {{
                     FileName = "powershell.exe",
                     Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
                     UseShellExecute = true,
-                    Verb = "runas", // Нужны права админа для изменения системного файла
+                    Verb = "runas",
                     WindowStyle = ProcessWindowStyle.Hidden
                 });
+
+
 
                 process?.WaitForExit();
 

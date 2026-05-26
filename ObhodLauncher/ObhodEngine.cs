@@ -11,7 +11,7 @@ namespace ZapretWPF
         private Process _winwsProcess;
         public Action<string> OnLog { get; set; }
 
-        public void Start(bool enableDiscord, bool enableYouTube, int strategyIndex)
+        public void Start(bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
         {
             if (_winwsProcess != null && !_winwsProcess.HasExited)
             {
@@ -74,7 +74,7 @@ namespace ZapretWPF
             }
         }
 
-        public void InstallService(bool enableDiscord, bool enableYouTube, int strategyIndex)
+        public void InstallService(bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
         {
             CreateDummyListsIfMissing();
             string args = GetArguments(enableDiscord, enableYouTube, strategyIndex);
@@ -116,6 +116,18 @@ namespace ZapretWPF
                 string path = Path.Combine(listsPath, file);
                 if (!File.Exists(path)) File.WriteAllText(path, "");
             }
+
+            // Создаем файл с IP-подсетями Telegram, если его нет
+            string tgIpsetPath = Path.Combine(listsPath, "ipset-telegram.txt");
+            if (!File.Exists(tgIpsetPath))
+            {
+                // Официальные ASN Телеграма: AS59930, AS44907, AS62014, AS62041, AS211157
+                string tgSubnets =
+                    "91.108.4.0/22\n91.108.8.0/22\n91.108.12.0/22\n91.108.16.0/22\n91.108.20.0/22\n" +
+                    "91.108.56.0/22\n91.108.192.0/22\n149.154.160.0/20\n149.154.164.0/22\n149.154.168.0/22\n" +
+                    "149.154.172.0/22\n185.76.151.0/24\n95.161.76.0/23";
+                File.WriteAllText(tgIpsetPath, tgSubnets);
+            }
         }
 
         public void FlushDNS()
@@ -146,13 +158,12 @@ namespace ZapretWPF
             }
         }
 
-        private string GetArguments(bool discord, bool youtube, int strategyIndex)
+        private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex)
         {
             string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
             string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
             string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443 --wf-udp=443,19294-19344,50000-50100 ";
-
             string generalLists = $"--hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\"";
 
             switch (strategyIndex)
@@ -242,6 +253,15 @@ namespace ZapretWPF
                         args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=10000000 --dpi-desync-repeats=6 --new ";
                     }
                     break;
+            }
+
+            if (telegram)
+            {
+                // Порты Telegram: 443, 80 (HTTP/TCP), иногда 5222.
+                // Применяем split2 + badseq для обхода замедления MTProto (TCP) по IP адресам
+                args += $"--filter-tcp=80,443,5222 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake,split2 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new ";
+                // Для звонков Telegram (UDP 443) применяем fake
+                args += $"--filter-udp=443 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
             }
 
             return args;

@@ -270,9 +270,12 @@ namespace ZapretWPF
 
             if (telegram)
             {
-                args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
+                args += $"--filter-tcp=80,443 --hostlist-domains=telegram.org,telegram.dog,telegram.me,t.me,telesco.pe --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
 
-                // Для звонков Telegram (UDP)
+                args += $"--filter-tcp=5222,5228,4244,5223 --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
+
+                args += $"--filter-tcp=443 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
+
                 args += $"--filter-udp=443 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
             }
 

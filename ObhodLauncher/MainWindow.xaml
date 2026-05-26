@@ -420,8 +420,9 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,40,0">
-                                        <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,20"/>
-                                        <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}"/>
+                                        <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
+                                        <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
+                                        <CheckBox x:Name="chkTelegram" Content="Разблокировать Telegram" IsChecked="False" Style="{StaticResource ToggleSwitch}"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">

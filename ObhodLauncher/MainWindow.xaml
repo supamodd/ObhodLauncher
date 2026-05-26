@@ -497,6 +497,7 @@
                                             <ComboBoxItem Content="Cloudflare (1.1.1.1)"/>
                                             <ComboBoxItem Content="Google DNS (8.8.8.8)"/>
                                             <ComboBoxItem Content="XBOX DNS (111.88.96.50)"/>
+                                            <ComboBoxItem Content="По умолчанию (Авто)"/>
                                         </ComboBox>
 
                                         <Button Content="Применить DNS" Style="{StaticResource AccentButton}" Padding="10,6" Click="BtnSetDns_Click"/>

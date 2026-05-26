@@ -365,10 +365,20 @@ namespace ZapretWPF
         {
             try
             {
-                OnLog?.Invoke($"=== Смена DNS-серверов на {dnsName} ===");
-                OnLog?.Invoke($"Установка адресов: {primaryDNS}, {secondaryDNS}");
+                string psCommand;
 
-                string psCommand = $"Get-NetAdapter | Where-Object {{ $_.Status -eq 'Up' -and $_.Name -notmatch 'vEthernet|Virtual|Pseudo|Loopback' }} | Set-DnsClientServerAddress -ServerAddresses '{primaryDNS}', '{secondaryDNS}'";
+                if (dnsName == "По умолчанию")
+                {
+                    OnLog?.Invoke("=== Сброс DNS-серверов к значениям провайдера ===");
+                    // Команда очищает ручные DNS и возвращает адаптер в режим автоматического получения (DHCP)
+                    psCommand = "Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.Name -notmatch 'vEthernet|Virtual|Pseudo|Loopback' } | Set-DnsClientServerAddress -ResetServerAddresses";
+                }
+                else
+                {
+                    OnLog?.Invoke($"=== Смена DNS-серверов на {dnsName} ===");
+                    OnLog?.Invoke($"Установка адресов: {primaryDNS}, {secondaryDNS}");
+                    psCommand = $"Get-NetAdapter | Where-Object {{ $_.Status -eq 'Up' -and $_.Name -notmatch 'vEthernet|Virtual|Pseudo|Loopback' }} | Set-DnsClientServerAddress -ServerAddresses '{primaryDNS}', '{secondaryDNS}'";
+                }
 
                 var process = Process.Start(new ProcessStartInfo
                 {
@@ -381,14 +391,21 @@ namespace ZapretWPF
 
                 process?.WaitForExit();
 
-                OnLog?.Invoke($"[✓] Настройки сетевого адаптера успешно обновлены на {dnsName}!");
-                OnLog?.Invoke("Рекомендуется нажать 'Очистить' (Сброс сети) для применения изменений.");
-
-                if (dnsName.Contains("XBOX"))
+                if (dnsName == "По умолчанию")
                 {
-                    OnLog?.Invoke("\nВНИМАНИЕ: Для полной работы XBOX DNS через шифрование (DoH) ");
-                    OnLog?.Invoke("добавьте в браузере безопасный DNS: https://xbox-dns.ru/dns-query");
+                    OnLog?.Invoke("[✓] Настройки DNS сброшены! Теперь они получаются автоматически.");
                 }
+                else
+                {
+                    OnLog?.Invoke($"[✓] Настройки сетевого адаптера успешно обновлены на {dnsName}!");
+
+                    if (dnsName.Contains("XBOX"))
+                    {
+                        OnLog?.Invoke("\nВНИМАНИЕ: Для полной работы XBOX DNS через шифрование (DoH) ");
+                        OnLog?.Invoke("добавьте в браузере безопасный DNS: https://xbox-dns.ru/dns-query");
+                    }
+                }
+                OnLog?.Invoke("Рекомендуется нажать 'Очистить' (Сброс сети) для применения изменений.");
             }
             catch (Exception ex)
             {

@@ -26,10 +26,11 @@ namespace ZapretWPF
         {
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
+            bool telegram = chkTelegram.IsChecked ?? false;
 
             int strategy = cmbStrategy.SelectedIndex;
 
-            _engine.Start(discord, youtube, strategy);
+            _engine.Start(discord, youtube, telegram, strategy);
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
@@ -41,9 +42,11 @@ namespace ZapretWPF
         {
             bool discord = chkDiscord.IsChecked ?? false;
             bool youtube = chkYouTube.IsChecked ?? false;
+            bool telegram = chkTelegram.IsChecked ?? false;
+
             int strategy = cmbStrategy.SelectedIndex;
 
-            _engine.InstallService(discord, youtube, strategy);
+            _engine.InstallService(discord, youtube, telegram, strategy);
         }
 
         private void BtnRemoveService_Click(object sender, RoutedEventArgs e)

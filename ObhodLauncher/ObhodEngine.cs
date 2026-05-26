@@ -20,7 +20,7 @@ namespace ZapretWPF
             }
 
             CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube, strategyIndex);
+            string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex);
             OnLog?.Invoke($"[Запуск winws.exe] Стратегия #{strategyIndex + 1}\nАргументы: {args}\n");
 
             try
@@ -77,7 +77,7 @@ namespace ZapretWPF
         public void InstallService(bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
         {
             CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube, strategyIndex);
+            string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex);
             string binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
 
             string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";

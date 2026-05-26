@@ -331,7 +331,6 @@ namespace ZapretWPF
 
             using (var client = new HttpClient())
             {
-                // Игнорируем кэширование браузера
                 client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
                 client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SupaModd/1.0");
 
@@ -346,10 +345,8 @@ namespace ZapretWPF
                         string fileUrl = baseUrl + file;
                         string savePath = Path.Combine(listsPath, file);
 
-                        // Скачиваем содержимое файла
                         string content = await client.GetStringAsync(fileUrl);
 
-                        // Сохраняем поверх старого
                         File.WriteAllText(savePath, content);
                         OnLog?.Invoke($"[✓] {file} успешно обновлен!");
                     }
@@ -362,6 +359,41 @@ namespace ZapretWPF
 
             OnLog?.Invoke("=== Обновление списков завершено ===");
             OnLog?.Invoke("Внимание: Изменения вступят в силу после перезапуска обхода (или переустановки Службы).");
+        }
+
+        public void SetCustomDNS(string dnsName, string primaryDNS, string secondaryDNS)
+        {
+            try
+            {
+                OnLog?.Invoke($"=== Смена DNS-серверов на {dnsName} ===");
+                OnLog?.Invoke($"Установка адресов: {primaryDNS}, {secondaryDNS}");
+
+                string psCommand = $"Get-NetAdapter | Where-Object {{ $_.Status -eq 'Up' -and $_.Name -notmatch 'vEthernet|Virtual|Pseudo|Loopback' }} | Set-DnsClientServerAddress -ServerAddresses '{primaryDNS}', '{secondaryDNS}'";
+
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Hidden
+                });
+
+                process?.WaitForExit();
+
+                OnLog?.Invoke($"[✓] Настройки сетевого адаптера успешно обновлены на {dnsName}!");
+                OnLog?.Invoke("Рекомендуется нажать 'Очистить' (Сброс сети) для применения изменений.");
+
+                if (dnsName.Contains("XBOX"))
+                {
+                    OnLog?.Invoke("\nВНИМАНИЕ: Для полной работы XBOX DNS через шифрование (DoH) ");
+                    OnLog?.Invoke("добавьте в браузере безопасный DNS: https://xbox-dns.ru/dns-query");
+                }
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[✗] Ошибка при смене DNS: {ex.Message}");
+            }
         }
 
         private void RunAsAdmin(string fileName, string args)

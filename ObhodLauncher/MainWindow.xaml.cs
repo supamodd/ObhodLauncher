@@ -78,6 +78,29 @@ namespace ZapretWPF
             if (btn != null) btn.IsEnabled = true;
         }
 
+        private void BtnSetDns_Click(object sender, RoutedEventArgs e)
+        {
+            // Переключаем на первую вкладку для показа логов
+            if (MainTabControl != null) MainTabControl.SelectedIndex = 0;
+
+            int selectedDns = cmbDnsSelection.SelectedIndex;
+
+            switch (selectedDns)
+            {
+                case 0: // Cloudflare
+                    _engine.SetCustomDNS("Cloudflare", "1.1.1.1", "1.0.0.1");
+                    break;
+
+                case 1: // Google
+                    _engine.SetCustomDNS("Google DNS", "8.8.8.8", "8.8.4.4");
+                    break;
+
+                case 2: // XBOX DNS
+                    _engine.SetCustomDNS("XBOX DNS", "111.88.96.50", "111.88.96.51");
+                    break;
+            }
+        }
+
         // --- МЕТОДЫ КАСТОМНОЙ ПАНЕЛИ УПРАВЛЕНИЯ ОКНОМ ---
 
         private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

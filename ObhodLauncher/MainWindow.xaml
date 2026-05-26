@@ -469,9 +469,9 @@
                             <TextBlock Text="Настройки DNS" FontSize="16" FontWeight="SemiBold" Padding="10,2"/>
                         </TabItem.Header>
                         <Grid Margin="0,20,0,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0" Height="279" Width="693">
 
-                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="260" Height="220" Margin="0,0,25,0" Padding="25">
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="275" Height="269" Margin="0,0,25,0" Padding="25">
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="🧹" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
                                             <TextBlock.Effect>
@@ -483,17 +483,23 @@
                                         <Button Content="Очистить" Style="{StaticResource GlassButton}" Padding="10,8" Click="BtnFlushDns_Click"/>
                                     </StackPanel>
                                 </Border>
-
-                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="260" Height="220" Padding="25">
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="301" Height="259" Padding="20">
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="🔒" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                        <TextBlock Text="🔒" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10">
                                             <TextBlock.Effect>
                                                 <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
-                                        <TextBlock Text="Сменить DNS" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Установить Cloudflare или Google DNS для всей системы." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="13" Margin="0,0,0,20"/>
-                                        <Button Content="Скоро" Style="{StaticResource AccentButton}" IsEnabled="False" Padding="10,8"/>
+                                        <TextBlock Text="Сменить DNS" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                        <TextBlock Text="Установите безопасные DNS-серверы для обхода базовых блокировок." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="12" Margin="0,0,0,10"/>
+
+                                        <ComboBox x:Name="cmbDnsSelection" Height="32" FontSize="13" SelectedIndex="0" Style="{StaticResource GlassComboBox}" Margin="0,0,0,10">
+                                            <ComboBoxItem Content="Cloudflare (1.1.1.1)"/>
+                                            <ComboBoxItem Content="Google DNS (8.8.8.8)"/>
+                                            <ComboBoxItem Content="XBOX DNS (111.88.96.50)"/>
+                                        </ComboBox>
+
+                                        <Button Content="Применить DNS" Style="{StaticResource AccentButton}" Padding="10,6" Click="BtnSetDns_Click"/>
                                     </StackPanel>
                                 </Border>
 

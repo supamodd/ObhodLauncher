@@ -378,9 +378,7 @@
                         MouseLeftButtonDown="Header_MouseLeftButtonDown">
                     <Grid>
                         <!-- Логотип и Название -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="25,0,0,0" IsHitTestVisible="False">
-                            <TextBlock Text="🚀" FontSize="26" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Obhod" FontSize="24" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="106,0,0,0" IsHitTestVisible="False">
                             <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Margin="15,0,0,0" VerticalAlignment="Center">
                                 <TextBlock Text="v1.0" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}"/>
                             </Border>

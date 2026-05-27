@@ -18,5 +18,11 @@
 	  <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
 	  <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
+  <ItemGroup>
+    <None Remove="obhod_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="obhod_logo.png" />
+  </ItemGroup>
 
 </Project>

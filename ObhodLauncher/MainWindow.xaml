@@ -515,10 +515,10 @@
                             <TextBlock Text="Другое" FontSize="16" FontWeight="SemiBold" Padding="10,2"/>
                         </TabItem.Header>
                         <Grid Margin="0,20,0,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,60,0,0" Height="265" Width="657">
 
                                 <!-- Карточка: Instagram -->
-                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="324" Height="274" Margin="0,0,25,0" Padding="25">
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="303" Height="257" Margin="0,0,25,0" Padding="25">
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="📸" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
                                             <TextBlock.Effect>
@@ -531,7 +531,19 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Карточка: Telegram (Заготовка) -->
+                                <!-- Карточка: Разное (Секретная кнопка) -->
+                                <Border Background="{StaticResource GlassBg}" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" CornerRadius="15" Width="301" Height="258" Padding="25">
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="🎭" FontSize="45" HorizontalAlignment="Center" Margin="0,0,0,15">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
+                                        <TextBlock Text="Разблокировка Медиа" FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Добавляет популярные заблокированные ресурсы и галереи в фильтр обхода DPI." TextWrapping="Wrap" TextAlignment="Center" Foreground="#a1a1aa" FontSize="12" Margin="0,0,0,20"/>
+                                        <Button Content="Активировать" Style="{StaticResource GlassButton}" Padding="10,8" Click="BtnMediaBypass_Click"/>
+                                    </StackPanel>
+                                </Border>
 
                             </StackPanel>
                         </Grid>

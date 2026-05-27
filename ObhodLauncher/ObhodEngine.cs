@@ -511,6 +511,61 @@ namespace ZapretWPF
             }
         }
 
+        public void AddMediaBypass()
+        {
+            try
+            {
+                OnLog?.Invoke("=== Добавление обхода для медиа-ресурсов ===");
+
+                string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
+                string userListPath = Path.Combine(listsPath, "list-general-user.txt");
+
+                if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
+
+                string currentUserList = "";
+                if (File.Exists(userListPath))
+                {
+                    currentUserList = File.ReadAllText(userListPath);
+                }
+
+                string[] domainsToAdd = new string[]
+                {
+                    "pornhub.com",
+                    "phncdn.com", 
+                    "phprcdn.com", 
+                    "models.com",
+                    "gamma.app"
+                };
+
+                int addedCount = 0;
+                using (StreamWriter sw = File.AppendText(userListPath))
+                {
+                    foreach (string domain in domainsToAdd)
+                    {
+                        if (!currentUserList.Contains(domain))
+                        {
+                            sw.WriteLine(domain);
+                            addedCount++;
+                        }
+                    }
+                }
+
+                if (addedCount > 0)
+                {
+                    OnLog?.Invoke($"[✓] Добавлено {addedCount} новых доменов в пользовательский список!");
+                    OnLog?.Invoke("Для применения изменений просто перезапустите обход (кнопка 'Остановка', затем 'Тест' или переустановка Службы).");
+                }
+                else
+                {
+                    OnLog?.Invoke("[✓] Все нужные домены уже присутствуют в списке.");
+                }
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[✗] Ошибка при добавлении доменов: {ex.Message}");
+            }
+        }
+
         private void RunAsAdmin(string fileName, string args)
         {
             var process = Process.Start(new ProcessStartInfo

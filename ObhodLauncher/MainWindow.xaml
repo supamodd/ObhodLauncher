@@ -374,13 +374,20 @@
 
             <Grid>
                 <!-- КАСТОМНАЯ ШАПКА ОКНА (С перетаскиванием мыши) -->
+                <!-- Верхняя шапка -->
                 <Border Height="70" VerticalAlignment="Top" Background="#80000000" BorderBrush="{StaticResource GlassBorder}" BorderThickness="0,0,0,1" 
-                        MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
                     <Grid>
-                        <!-- Логотип и Название -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="106,0,0,0" IsHitTestVisible="False">
+                        <!-- Логотип (Картинка) -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="25,0,0,0" IsHitTestVisible="False">
+                            <!-- Наша картинка логотипа -->
+
+                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
+                            <Image Source="/logo.png" Height="40" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Width="679"/>
+
+                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
                             <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Margin="15,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="v1.0" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}"/>
+                                <TextBlock Text="v1.0" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}" RenderTransformOrigin="-1.704,0.789"/>
                             </Border>
                         </StackPanel>
 

@@ -383,11 +383,11 @@
                             <!-- Наша картинка логотипа -->
 
                             <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <Image Source="/logo.png" Height="40" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Width="679"/>
+                            <Image Source="/logo.png" Height="40" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Width="695"/>
 
                             <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Margin="15,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="v1.0" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}" RenderTransformOrigin="-1.704,0.789"/>
+                            <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Margin="15,0,0,0" VerticalAlignment="Center" Width="50">
+                                <TextBlock Text="v1.0.2" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}" RenderTransformOrigin="-1.704,0.789"/>
                             </Border>
                         </StackPanel>
 

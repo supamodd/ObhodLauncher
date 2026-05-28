@@ -255,18 +255,26 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 5: // 6. SupaModd Custom (Усиленный ALT 2: Multisplit pos=2 + Badseq)
-                    // Раз у тебя работает только ALT 2 (multisplit pos=2), мы сделаем Custom на его базе!
+                case 5: // 6. SupaModd Custom (Макс. Пробив для Билайна)
+                    // Для общих сайтов (Instagram, Pornhub) используем проверенный fakedsplit
                     args += $"--filter-udp=443 {generalLists} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
+
                     if (discord)
                     {
-                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                        // Тот самый рабочий код от Fake TLS (который у тебя пробил Дискорд)
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
                     }
+
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --dpi-desync-split-seqovl-pattern=\"{bin}tls_clienthello_www_google_com.bin\" --new ";
+                        // БРОНЕБОЙНЫЙ ЮТУБ: Убрали ip-id=zero, используем мощный syndata + multidisorder с плохой контрольной суммой (badsum)
+                        // Это заставляет ТСПУ провайдера "подавиться" на фальшивом SYN-пакете, пропуская настоящий трафик Ютуба
+                        args += $"--wf-l3=ipv4 --filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=syndata,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badsum,md5sig --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
+
+                        // QUIC (UDP) для Ютуба, маскируемся под dbankcloud вместо стандартного google
+                        args += $"--filter-udp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_dbankcloud_ru.bin\" --new ";
                     }
                     break;
             }

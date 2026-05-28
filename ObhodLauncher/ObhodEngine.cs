@@ -161,14 +161,10 @@ namespace ZapretWPF
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string binPath = Path.Combine(baseDir, "bin") + "\\";
-            string listsPath = Path.Combine(baseDir, "lists") + "\\";
+            // Для максимальной надежности всегда используем АБСОЛЮТНЫЕ пути к папкам!
+            string binPrefix = Path.Combine(baseDir, "bin") + "\\";
+            string listsPrefix = Path.Combine(baseDir, "lists") + "\\";
 
-            // Если для сервиса - полные пути, иначе - относительные
-            string binPrefix = forService ? binPath : "";
-            string listsPrefix = forService ? listsPath : "..\\lists\\"; // Из папки bin выходим в lists
-
-            // Сопоставляем индекс комбобокса с именем файла
             string[] batFiles = {
                 "general.bat", "general (ALT).bat", "general (ALT2).bat", "general (ALT3).bat",
                 "general (ALT4).bat", "general (ALT5).bat", "general (ALT6).bat", "general (ALT7).bat",
@@ -189,7 +185,6 @@ namespace ZapretWPF
             {
                 if (line.Trim().StartsWith("start") && line.Contains("winws.exe"))
                 {
-                    // Вырезаем всё, что идет после "winws.exe" "
                     int idx = line.IndexOf("winws.exe\"");
                     if (idx != -1)
                     {
@@ -199,44 +194,45 @@ namespace ZapretWPF
                 }
             }
 
-            // Очищаем от переносов строк батника (символ ^)
-            args = args.Replace(" ^", " ");
+            // Очищаем от кареток (^) и склеиваем в одну чистую строку
+            args = args.Replace("^", " ");
+            while (args.Contains("  ")) args = args.Replace("  ", " "); // Убираем двойные пробелы
 
-            // Заменяем переменные из батника на реальные пути
-            args = args.Replace("%BIN%", binPrefix);
-            args = args.Replace("%LISTS%", listsPrefix);
-
-            // Заменяем игровые порты (по дефолту отключены)
-            args = args.Replace("%GameFilterTCP%", "12");
-            args = args.Replace("%GameFilterUDP%", "12");
-
-            // --- ОБРАБОТКА ПОЛЬЗОВАТЕЛЬСКИХ ГАЛОЧК (ВКЛ/ВЫКЛ ЮТУБ И ДИСКОРД) ---
-            // Если пользователь отключил галку, мы просто удаляем соответствующий блок из строки аргументов!
-
+            // Если пользователь ОТКЛЮЧИЛ YouTube: аккуратно вырезаем блоки с list-google.txt
             if (!youtube)
             {
-                // Удаляем блоки, где упоминается list-google.txt
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-tcp=443 --hostlist=.*?list-google\.txt"".*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // Заменяем блоки, начиная с --filter и заканчивая --new, ЕСЛИ внутри есть list-google.txt
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?list-google\.txt.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             }
 
+            // Если пользователь ОТКЛЮЧИЛ Discord: аккуратно вырезаем блоки Discord
             if (!discord)
             {
-                // Удаляем блоки с L7=discord и порты discord.media
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-udp=.*?--filter-l7=discord,stun.*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-tcp=.*?--hostlist-domains=discord\.media.*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?discord,stun.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?discord\.media.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             }
 
-            // Добавляем Медиа-листы (Порнхаб/Инста) если они активированы
-            if (File.Exists(Path.Combine(listsPath, "list-media.txt")))
+            // ЗАМЕНА ПУТЕЙ И ПЕРЕМЕННЫХ
+            // ВАЖНО: Мы убираем кавычки вокруг %BIN% и %LISTS% в батнике, потому что мы добавим свои кавычки ко всем путям
+            args = args.Replace("\"%BIN%", "\"").Replace("\"%LISTS%", "\""); // Чистим оригинальные кавычки
+            args = args.Replace("%BIN%", $"\"{binPrefix}\"");
+            args = args.Replace("%LISTS%", $"\"{listsPrefix}\"");
+
+            // Игровые порты (Включаем высокие порты для видео CDN, как в оригинале Flowseal!)
+            args = args.Replace("%GameFilterTCP%", "1024-65535");
+            args = args.Replace("%GameFilterUDP%", "1024-65535");
+
+            // --- МЕДИА ЛИСТЫ (Порнхаб/Инста) ---
+            if (File.Exists(Path.Combine(baseDir, "lists", "list-media.txt")))
             {
                 args = args.Replace("--hostlist-exclude=", $"--hostlist=\"{listsPrefix}list-media.txt\" --hostlist-exclude=");
             }
 
-            // Добавляем Telegram (универсальный обход, которого нет во Flowseal)
+            // --- ТЕЛЕГРАМ ---
             if (telegram)
             {
                 args += $" --filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
-                args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
+                args += $" --filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
             }
 
             return args.Trim();

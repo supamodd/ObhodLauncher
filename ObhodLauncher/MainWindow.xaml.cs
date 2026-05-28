@@ -21,11 +21,58 @@ namespace ZapretWPF
                 });
             };
 
-            // ПРОВЕРКА СТАТУСА ПРИ ЗАПУСКЕ ПРОГРАММЫ
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            LoadSettings();
+
             CheckStatus();
         }
 
-        // Метод, который меняет цвет индикатора
+        private void SaveSettings()
+        {
+            try
+            {
+                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.txt");
+                string config = $"Discord={(chkDiscord.IsChecked ?? false)}\n" +
+                                $"YouTube={(chkYouTube.IsChecked ?? false)}\n" +
+                                $"Telegram={(chkTelegram.IsChecked ?? false)}\n" +
+                                $"Strategy={cmbStrategy.SelectedIndex}";
+                System.IO.File.WriteAllText(configPath, config);
+            }
+            catch { }
+        }
+
+        private void LoadSettings()
+        {
+            try
+            {
+                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.txt");
+                if (System.IO.File.Exists(configPath))
+                {
+                    string[] lines = System.IO.File.ReadAllLines(configPath);
+                    foreach (string line in lines)
+                    {
+                        if (line.StartsWith("Discord=")) chkDiscord.IsChecked = bool.Parse(line.Split('=')[1]);
+                        if (line.StartsWith("YouTube=")) chkYouTube.IsChecked = bool.Parse(line.Split('=')[1]);
+                        if (line.StartsWith("Telegram=")) chkTelegram.IsChecked = bool.Parse(line.Split('=')[1]);
+                        if (line.StartsWith("Strategy=")) cmbStrategy.SelectedIndex = int.Parse(line.Split('=')[1]);
+                    }
+                }
+                else
+                {
+                    // Если конфига нет (первый запуск), ставим дефолтные галочки
+                    chkDiscord.IsChecked = true;
+                    chkYouTube.IsChecked = true;
+                    chkTelegram.IsChecked = false;
+                    cmbStrategy.SelectedIndex = 5;
+                }
+            }
+            catch { }
+        }
+
         private void CheckStatus()
         {
             bool isRunning = _engine.IsServiceRunning();

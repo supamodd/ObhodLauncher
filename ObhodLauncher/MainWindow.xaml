@@ -144,25 +144,21 @@
             </StackPanel>
 
             <ControlTemplate.Triggers>
-                <!-- Состояние ВКЛЮЧЕНО (Мгновенное применение при старте) -->
                 <Trigger Property="IsChecked" Value="True">
                     <Setter TargetName="SwitchBg" Property="Background" Value="{StaticResource AccentColor}"/>
                     <Setter TargetName="SwitchBg" Property="BorderThickness" Value="0"/>
                     <Setter TargetName="SwitchThumb" Property="Margin" Value="23,0,0,0"/>
                 </Trigger>
 
-                <!-- Состояние ВЫКЛЮЧЕНО -->
                 <Trigger Property="IsChecked" Value="False">
                     <Setter TargetName="SwitchBg" Property="Background" Value="#40ffffff"/>
                     <Setter TargetName="SwitchBg" Property="BorderThickness" Value="1"/>
                     <Setter TargetName="SwitchThumb" Property="Margin" Value="3,0,0,0"/>
                 </Trigger>
 
-                <!-- Анимация при включении (клик мышки) -->
                 <EventTrigger RoutedEvent="ToggleButton.Checked">
                     <BeginStoryboard>
                         <Storyboard>
-                            <!-- Анимируем отступ слева направо (Thickness = Left, Top, Right, Bottom) -->
                             <ThicknessAnimation Storyboard.TargetName="SwitchThumb" Storyboard.TargetProperty="Margin" 
                                                 From="3,0,0,0" To="23,0,0,0" Duration="0:0:0.15">
                                 <ThicknessAnimation.EasingFunction>
@@ -173,7 +169,6 @@
                     </BeginStoryboard>
                 </EventTrigger>
 
-                <!-- Анимация при выключении -->
                 <EventTrigger RoutedEvent="ToggleButton.Unchecked">
                     <BeginStoryboard>
                         <Storyboard>
@@ -441,9 +436,9 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,40,0">
-                                        <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
-                                        <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" IsChecked="True" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
-                                        <CheckBox x:Name="chkTelegram" Content="Разблокировать Telegram" IsChecked="False" Style="{StaticResource ToggleSwitch}"/>
+                                        <CheckBox x:Name="chkDiscord" Content="Разблокировать Discord" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
+                                        <CheckBox x:Name="chkYouTube" Content="Разблокировать YouTube" Style="{StaticResource ToggleSwitch}" Margin="0,0,0,15"/>
+                                        <CheckBox x:Name="chkTelegram" Content="Разблокировать Telegram" Style="{StaticResource ToggleSwitch}"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">

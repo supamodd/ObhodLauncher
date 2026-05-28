@@ -9,6 +9,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
+	</ItemGroup>
+
   <!-- Этот блок автоматически скопирует твои файлы obhod-bin и obhod-lists в папку с готовым .exe при компиляции -->
   <Target Name="CopyZapretFiles" AfterTargets="Build">
     <ItemGroup>

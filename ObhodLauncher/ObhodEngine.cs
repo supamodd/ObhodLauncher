@@ -572,14 +572,14 @@ namespace ZapretWPF
         {
             try
             {
-                // Проверяем, существует ли и работает ли служба Windows
+                // Проверка, существует ли и работает ли служба Windows
                 ServiceController sc = new ServiceController("ObhodService");
                 if (sc.Status == ServiceControllerStatus.Running)
                     return true;
             }
             catch
             {
-                // Служба не найдена, проверяем, может запущен просто тестовый процесс winws.exe
+                // Служба не найдена, проверкаа, может запущен просто тестовый процесс winws.exe
                 Process[] processes = Process.GetProcessesByName("winws");
                 if (processes.Length > 0)
                     return true;

@@ -255,23 +255,26 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 5: // 6. SupaModd Custom (Бронебойный профиль 2026)
-                    // Базовый профиль для общих сайтов
-                    args += $"--filter-udp=443 {generalLists} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig --new ";
+                case 5: // 6. SupaModd Custom (Бронебойный профиль 2026 с TTL и мультипозиционным сплитом)
+                    // Базовый профиль для общих сайтов (Порнхаб, инста, и т.д.)
+                    args += $"--filter-udp=443 {generalLists} --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
+                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=fake,multidisorder --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-repeats=6 --new ";
 
                     if (discord)
                     {
-                        // Обход голоса дискорда (агрессивный fake под stun)
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-wireguard=0x00 --dpi-desync-repeats=11 --new ";
-                        // Обход медиа дискорда (маскировка под google)
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multidisorder --dpi-desync-split-pos=7,sld+1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --dpi-desync-fooling=badseq --dpi-desync-autottl=2:2-12 --new ";
+                        // Обход голоса дискорда
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-cutoff=n2 --dpi-desync-ttl=4 --dpi-desync-repeats=6 --new ";
+                        args += $"--filter-udp=19294-19344,50000-50100 --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol --new ";
+
+                        // Обход медиа дискорда
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multidisorder --dpi-desync-fake-tls-mod=rnd,dupsid --dpi-desync-repeats=4 --dpi-desync-ttl=4 --dpi-desync-split-pos=100,midsld,sniext+1,endhost-2,-10 --new ";
                     }
                     if (youtube)
                     {
-                        // БРОНЕБОЙНЫЙ ЮТУБ: multidisorder + подмена TLS + badseq (Без ip-id=zero, который палится)
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,multidisorder --dpi-desync-split-pos=7,sld+1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --dpi-desync-fooling=badseq --dpi-desync-autottl=2:2-12 --new ";
-                        // Бронебойный QUIC:
+                        // БРОНЕБОЙНЫЙ ЮТУБ 2026 (multi-position split + TTL)
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,multidisorder --dpi-desync-repeats=4 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-split-pos=100,midsld,sniext+1,endhost-2,-10 --dpi-desync-ttl=4 --new ";
+
+                        // QUIC (UDP) для Ютуба
                         args += $"--filter-udp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
                     }
                     break;

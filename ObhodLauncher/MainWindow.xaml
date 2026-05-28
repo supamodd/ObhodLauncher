@@ -443,13 +443,15 @@
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="14" Margin="0,0,0,8"/>
-                                        <ComboBox x:Name="cmbStrategy" Height="40" FontSize="15" SelectedIndex="0" Style="{StaticResource GlassComboBox}">
-                                            <ComboBoxItem Content="1. Flowseal (General)"/>
-                                            <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
-                                            <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
-                                            <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
-                                            <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
-                                            <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
+                                        <ComboBox x:Name="cmbStrategy" Height="40" FontSize="15" SelectedIndex="5" Style="{StaticResource GlassComboBox}">
+                                            <ComboBoxItem Content="1. General (Базовая)"/>
+                                            <ComboBoxItem Content="2. Flowseal ALT 1"/>
+                                            <ComboBoxItem Content="3. Flowseal ALT 2"/>
+                                            <ComboBoxItem Content="4. Flowseal (Fake TLS Auto)"/>
+                                            <ComboBoxItem Content="5. SupaModd Custom (Макс. Пробив)"/>
+                                            <ComboBoxItem Content="6. Beeline Fix (Split + BadSum)"/>
+                                            <ComboBoxItem Content="7. MGTS Fix (HopByHop + Fake)"/>
+                                            <ComboBoxItem Content="8. Hardcore (Syndata + Multidisorder)"/>
                                         </ComboBox>
 
                                         <!-- ИНДИКАТОР СТАТУСА -->

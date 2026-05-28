@@ -433,13 +433,25 @@
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="14" Margin="0,0,0,8"/>
                                         <ComboBox x:Name="cmbStrategy" Height="40" FontSize="15" SelectedIndex="5" Style="{StaticResource GlassComboBox}">
-                                            <ComboBoxItem Content="General"/>
-                                            <ComboBoxItem Content="Alternative 1"/>
-                                            <ComboBoxItem Content="Alternative 2"/>
-                                            <ComboBoxItem Content="Alternative 3"/>
-                                            <ComboBoxItem Content="Alternative 4 (на тех. обслуживании)"/>
-                                            <ComboBoxItem Content="Supamodd 1"/>
+                                            <ComboBoxItem Content="1. Flowseal (General)"/>
+                                            <ComboBoxItem Content="2. Flowseal (ALT 1)"/>
+                                            <ComboBoxItem Content="3. Flowseal (ALT 2)"/>
+                                            <ComboBoxItem Content="4. Flowseal (ALT 3)"/>
+                                            <ComboBoxItem Content="5. Flowseal (FAKE TLS AUTO ALT)"/>
+                                            <ComboBoxItem Content="6. SupaModd Custom (Макс. Пробив)"/>
                                         </ComboBox>
+
+                                        <!-- ИНДИКАТОР СТАТУСА -->
+                                        <Border x:Name="borderStatus" Background="#26000000" BorderBrush="#3f3f46" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,15,0,0">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Ellipse x:Name="indicatorStatus" Width="10" Height="10" Fill="#ef4444" Margin="0,0,8,0">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect Color="#ef4444" BlurRadius="10" ShadowDepth="0"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                                <TextBlock x:Name="txtStatus" Text="СТАТУС: ОСТАНОВЛЕН" FontSize="12" FontWeight="Bold" Foreground="#a1a1aa" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
                                 </Grid>
                             </Border>

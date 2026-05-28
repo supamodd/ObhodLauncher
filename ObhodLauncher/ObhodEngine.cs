@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.ServiceProcess;
+using System.Linq;
 
 namespace ZapretWPF
 {
@@ -564,6 +566,25 @@ namespace ZapretWPF
             {
                 OnLog?.Invoke($"[✗] Ошибка при добавлении доменов: {ex.Message}");
             }
+        }
+
+        public bool IsServiceRunning()
+        {
+            try
+            {
+                // Проверяем, существует ли и работает ли служба Windows
+                ServiceController sc = new ServiceController("ObhodService");
+                if (sc.Status == ServiceControllerStatus.Running)
+                    return true;
+            }
+            catch
+            {
+                // Служба не найдена, проверяем, может запущен просто тестовый процесс winws.exe
+                Process[] processes = Process.GetProcessesByName("winws");
+                if (processes.Length > 0)
+                    return true;
+            }
+            return false;
         }
 
         private void RunAsAdmin(string fileName, string args)

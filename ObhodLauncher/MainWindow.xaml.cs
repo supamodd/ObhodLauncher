@@ -20,6 +20,30 @@ namespace ZapretWPF
                     txtLogs.ScrollToEnd();
                 });
             };
+
+            // ПРОВЕРКА СТАТУСА ПРИ ЗАПУСКЕ ПРОГРАММЫ
+            CheckStatus();
+        }
+
+        // Метод, который меняет цвет индикатора
+        private void CheckStatus()
+        {
+            bool isRunning = _engine.IsServiceRunning();
+
+            if (isRunning)
+            {
+                indicatorStatus.Fill = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#4ade80");
+                ((System.Windows.Media.Effects.DropShadowEffect)indicatorStatus.Effect).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4ade80");
+                txtStatus.Text = "СТАТУС: РАБОТАЕТ В ФОНЕ";
+                txtStatus.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#4ade80");
+            }
+            else
+            {
+                indicatorStatus.Fill = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#ef4444");
+                ((System.Windows.Media.Effects.DropShadowEffect)indicatorStatus.Effect).Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#ef4444");
+                txtStatus.Text = "СТАТУС: ОСТАНОВЛЕН";
+                txtStatus.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#a1a1aa");
+            }
         }
 
         private void BtnStart_Click(object sender, RoutedEventArgs e)
@@ -31,11 +55,14 @@ namespace ZapretWPF
             int strategy = cmbStrategy.SelectedIndex;
 
             _engine.Start(discord, youtube, telegram, strategy);
+            System.Threading.Thread.Sleep(500);
+            CheckStatus();
         }
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
             _engine.Stop();
+            CheckStatus();
         }
 
         private void BtnInstallService_Click(object sender, RoutedEventArgs e)
@@ -47,11 +74,15 @@ namespace ZapretWPF
             int strategy = cmbStrategy.SelectedIndex;
 
             _engine.InstallService(discord, youtube, telegram, strategy);
+            System.Threading.Thread.Sleep(1000);
+            CheckStatus();
         }
 
         private void BtnRemoveService_Click(object sender, RoutedEventArgs e)
         {
             _engine.RemoveService();
+            System.Threading.Thread.Sleep(500);
+            CheckStatus();
         }
 
         private void BtnFlushDns_Click(object sender, RoutedEventArgs e)

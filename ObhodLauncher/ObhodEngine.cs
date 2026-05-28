@@ -256,7 +256,8 @@ namespace ZapretWPF
 
                     if (youtube)
                     {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
+                        // Убрали --ip-id=zero, который палится ТСПУ Билайна и блокирует подгрузку видео!
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
                     }
 
                     // FALLBACK ПРАВИЛА ИЗ ALT 11

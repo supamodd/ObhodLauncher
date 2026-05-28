@@ -255,26 +255,24 @@ namespace ZapretWPF
                     }
                     break;
 
-                case 5: // 6. SupaModd Custom (Макс. Пробив для Билайна)
-                    // Для общих сайтов (Instagram, Pornhub) используем проверенный fakedsplit
+                case 5: // 6. SupaModd Custom (Бронебойный профиль 2026)
+                    // Базовый профиль для общих сайтов
                     args += $"--filter-udp=443 {generalLists} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{bin}tls_clienthello_max_ru.bin\" --new ";
+                    args += $"--filter-tcp=80,443 {generalLists} --dpi-desync=fake,multidisorder --dpi-desync-split-pos=midsld --dpi-desync-repeats=6 --dpi-desync-fooling=badseq,md5sig --new ";
 
                     if (discord)
                     {
-                        // Тот самый рабочий код от Fake TLS (который у тебя пробил Дискорд)
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{bin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
+                        // Обход голоса дискорда (агрессивный fake под stun)
+                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-wireguard=0x00 --dpi-desync-repeats=11 --new ";
+                        // Обход медиа дискорда (маскировка под google)
+                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multidisorder --dpi-desync-split-pos=7,sld+1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --dpi-desync-fooling=badseq --dpi-desync-autottl=2:2-12 --new ";
                     }
-
                     if (youtube)
                     {
-                        // БРОНЕБОЙНЫЙ ЮТУБ: Убрали ip-id=zero, используем мощный syndata + multidisorder с плохой контрольной суммой (badsum)
-                        // Это заставляет ТСПУ провайдера "подавиться" на фальшивом SYN-пакете, пропуская настоящий трафик Ютуба
-                        args += $"--wf-l3=ipv4 --filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=syndata,multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badsum,md5sig --dpi-desync-repeats=6 --dpi-desync-fake-syndata=\"{bin}tls_clienthello_4pda_to.bin\" --new ";
-
-                        // QUIC (UDP) для Ютуба, маскируемся под dbankcloud вместо стандартного google
-                        args += $"--filter-udp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_dbankcloud_ru.bin\" --new ";
+                        // БРОНЕБОЙНЫЙ ЮТУБ: multidisorder + подмена TLS + badseq (Без ip-id=zero, который палится)
+                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake,multidisorder --dpi-desync-split-pos=7,sld+1 --dpi-desync-fake-tls=\"{bin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com --dpi-desync-fooling=badseq --dpi-desync-autottl=2:2-12 --new ";
+                        // Бронебойный QUIC:
+                        args += $"--filter-udp=443 --hostlist=\"{lists}list-google.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{bin}quic_initial_www_google_com.bin\" --new ";
                     }
                     break;
             }

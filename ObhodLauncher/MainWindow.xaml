@@ -443,15 +443,26 @@
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="Метод обхода (Стратегия):" Foreground="#a1a1aa" FontSize="14" Margin="0,0,0,8"/>
-                                        <ComboBox x:Name="cmbStrategy" Height="40" FontSize="15" SelectedIndex="5" Style="{StaticResource GlassComboBox}">
-                                            <ComboBoxItem Content="1. General (Базовая)"/>
-                                            <ComboBoxItem Content="2. Flowseal ALT 1"/>
-                                            <ComboBoxItem Content="3. Flowseal ALT 2"/>
-                                            <ComboBoxItem Content="4. Flowseal (Fake TLS Auto)"/>
-                                            <ComboBoxItem Content="5. SupaModd Custom (Макс. Пробив)"/>
-                                            <ComboBoxItem Content="6. Beeline Fix (Split + BadSum)"/>
-                                            <ComboBoxItem Content="7. MGTS Fix (HopByHop + Fake)"/>
-                                            <ComboBoxItem Content="8. Hardcore (Syndata + Multidisorder)"/>
+                                        <ComboBox x:Name="cmbStrategy" Height="40" FontSize="13" SelectedIndex="0" Style="{StaticResource GlassComboBox}">
+                                            <ComboBoxItem Content="1. general"/>
+                                            <ComboBoxItem Content="2. general (ALT)"/>
+                                            <ComboBoxItem Content="3. general (ALT2)"/>
+                                            <ComboBoxItem Content="4. general (ALT3)"/>
+                                            <ComboBoxItem Content="5. general (ALT4)"/>
+                                            <ComboBoxItem Content="6. general (ALT5)"/>
+                                            <ComboBoxItem Content="7. general (ALT6)"/>
+                                            <ComboBoxItem Content="8. general (ALT7)"/>
+                                            <ComboBoxItem Content="9. general (ALT8)"/>
+                                            <ComboBoxItem Content="10. general (ALT9)"/>
+                                            <ComboBoxItem Content="11. general (ALT10)"/>
+                                            <ComboBoxItem Content="12. general (ALT11)"/>
+                                            <ComboBoxItem Content="13. general (FAKE TLS AUTO)"/>
+                                            <ComboBoxItem Content="14. general (FAKE TLS AUTO ALT)"/>
+                                            <ComboBoxItem Content="15. general (FAKE TLS AUTO ALT2)"/>
+                                            <ComboBoxItem Content="16. general (FAKE TLS AUTO ALT3)"/>
+                                            <ComboBoxItem Content="17. general (SIMPLE FAKE)"/>
+                                            <ComboBoxItem Content="18. general (SIMPLE FAKE ALT)"/>
+                                            <ComboBoxItem Content="19. general (SIMPLE FAKE ALT2)"/>
                                         </ComboBox>
 
                                         <!-- ИНДИКАТОР СТАТУСА -->

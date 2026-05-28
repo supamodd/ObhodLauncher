@@ -18,9 +18,11 @@
     <ItemGroup>
       <ZapretBinFiles Include="obhod-bin\**\*.*" />
       <ZapretListsFiles Include="obhod-lists\**\*.*" />
+		<ZapretStrats Include="strategies\**\*.*" />
     </ItemGroup>
 	  <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
 	  <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" SkipUnchangedFiles="true" />
+	  <Copy SourceFiles="@(ZapretStrats)" DestinationFolder="$(OutDir)strategies\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
   <ItemGroup>
     <None Remove="logo.png" />

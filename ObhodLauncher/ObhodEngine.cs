@@ -160,121 +160,86 @@ namespace ZapretWPF
 
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
         {
-            string bin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin") + "\\";
-            string fBin = forService ? bin : "";
-            string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string binPath = Path.Combine(baseDir, "bin") + "\\";
+            string listsPath = Path.Combine(baseDir, "lists") + "\\";
 
-            string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443 --wf-udp=443,19294-19344,50000-50100 ";
+            // Если для сервиса - полные пути, иначе - относительные
+            string binPrefix = forService ? binPath : "";
+            string listsPrefix = forService ? listsPath : "..\\lists\\"; // Из папки bin выходим в lists
 
-            string mediaListArg = File.Exists(Path.Combine(lists, "list-media.txt")) ? $"--hostlist=\"{lists}list-media.txt\"" : "";
+            // Сопоставляем индекс комбобокса с именем файла
+            string[] batFiles = {
+                "general.bat", "general (ALT).bat", "general (ALT2).bat", "general (ALT3).bat",
+                "general (ALT4).bat", "general (ALT5).bat", "general (ALT6).bat", "general (ALT7).bat",
+                "general (ALT8).bat", "general (ALT9).bat", "general (ALT10).bat", "general (ALT11).bat",
+                "general (FAKE TLS AUTO).bat", "general (FAKE TLS AUTO ALT).bat",
+                "general (FAKE TLS AUTO ALT2).bat", "general (FAKE TLS AUTO ALT3).bat",
+                "general (SIMPLE FAKE).bat", "general (SIMPLE FAKE ALT).bat", "general (SIMPLE FAKE ALT2).bat"
+            };
 
-            string incLists = $"--hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" {mediaListArg}";
-            string exLists = $"--hostlist-exclude=\"{lists}list-exclude.txt\" --hostlist-exclude=\"{lists}list-exclude-user.txt\"";
-            string exIps = $"--ipset-exclude=\"{lists}ipset-exclude.txt\" --ipset-exclude=\"{lists}ipset-exclude-user.txt\"";
+            string batFilePath = Path.Combine(baseDir, "strategies", batFiles[strategyIndex]);
+            if (!File.Exists(batFilePath)) throw new Exception($"Файл стратегии не найден: {batFiles[strategyIndex]}");
 
-            switch (strategyIndex)
+            string args = "";
+            string[] lines = File.ReadAllLines(batFilePath);
+
+            // Ищем строку, где запускается winws
+            foreach (string line in lines)
             {
-                case 0: // 1. Flowseal General
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_4pda_to.bin\" --new ";
-                    if (discord)
+                if (line.Trim().StartsWith("start") && line.Contains("winws.exe"))
+                {
+                    // Вырезаем всё, что идет после "winws.exe" "
+                    int idx = line.IndexOf("winws.exe\"");
+                    if (idx != -1)
                     {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
+                        args = line.Substring(idx + 10).Trim();
+                        break;
                     }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    break;
-
-                case 1: // 2. Flowseal ALT 1
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{fBin}stun.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,fakedsplit --dpi-desync-repeats=6 --dpi-desync-fooling=ts --dpi-desync-fakedsplit-pattern=0x00 --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    break;
-
-                case 2: // 3. Flowseal ALT 2
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=multisplit --dpi-desync-split-seqovl=652 --dpi-desync-split-pos=2 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-                    break;
-
-                case 3: // 4. Flowseal ALT 3
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=ya.ru --dpi-desync-hostfakesplit-mod=host=ya.ru,altorder=1 --dpi-desync-fooling=ts --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-hostfakesplit-mod=host=www.google.com,altorder=1 --dpi-desync-fooling=ts --new ";
-                    }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,hostfakesplit --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-hostfakesplit-mod=host=www.google.com,altorder=1 --dpi-desync-fooling=ts --new ";
-                    }
-                    break;
-
-                case 4: // 5. Flowseal FAKE TLS AUTO ALT
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-fake-discord=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-fake-stun=\"{fBin}quic_initial_dbankcloud_ru.bin\" --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
-                    }
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --new ";
-                    }
-                    break;
-
-                case 5: // 6. SupaModd Custom (Точная копия ALT 11)
-                    args += $"--filter-udp=443 {incLists} {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443 {incLists} {exLists} {exIps} --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=664 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-tls=\"{fBin}stun.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-
-                    if (discord)
-                    {
-                        args += $"--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-repeats=6 --new ";
-                        args += $"--filter-tcp=2053,2083,2087,2096,8443 --hostlist-domains=discord.media --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-
-                    if (youtube)
-                    {
-                        args += $"--filter-tcp=443 --hostlist=\"{lists}list-google.txt\" --ip-id=zero --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=681 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_www_google_com.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_www_google_com.bin\" --new ";
-                    }
-
-                    // FALLBACK ПРАВИЛА ИЗ ALT 11
-                    args += $"--filter-udp=443 --ipset=\"{lists}ipset-all.txt\" {exLists} {exIps} --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{fBin}quic_initial_www_google_com.bin\" --new ";
-                    args += $"--filter-tcp=80,443,8443 --ipset=\"{lists}ipset-all.txt\" {exLists} {exIps} --dpi-desync=fake,multisplit --dpi-desync-split-seqovl=664 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-tls=\"{fBin}stun.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-
-                    args += $"--filter-tcp=12 --ipset=\"{lists}ipset-all.txt\" {exIps} --dpi-desync=fake,multisplit --dpi-desync-any-protocol=1 --dpi-desync-cutoff=n4 --dpi-desync-split-seqovl=664 --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=8 --dpi-desync-split-seqovl-pattern=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-tls=\"{fBin}stun.bin\" --dpi-desync-fake-tls=\"{fBin}tls_clienthello_max_ru.bin\" --dpi-desync-fake-http=\"{fBin}tls_clienthello_max_ru.bin\" --new ";
-                    args += $"--filter-udp=12 --ipset=\"{lists}ipset-all.txt\" {exIps} --dpi-desync=fake --dpi-desync-repeats=10 --dpi-desync-any-protocol=1 --dpi-desync-fake-unknown-udp=\"{fBin}quic_initial_www_google_com.bin\" --dpi-desync-cutoff=n4 ";
-                    break;
+                }
             }
 
+            // Очищаем от переносов строк батника (символ ^)
+            args = args.Replace(" ^", " ");
+
+            // Заменяем переменные из батника на реальные пути
+            args = args.Replace("%BIN%", binPrefix);
+            args = args.Replace("%LISTS%", listsPrefix);
+
+            // Заменяем игровые порты (по дефолту отключены)
+            args = args.Replace("%GameFilterTCP%", "12");
+            args = args.Replace("%GameFilterUDP%", "12");
+
+            // --- ОБРАБОТКА ПОЛЬЗОВАТЕЛЬСКИХ ГАЛОЧК (ВКЛ/ВЫКЛ ЮТУБ И ДИСКОРД) ---
+            // Если пользователь отключил галку, мы просто удаляем соответствующий блок из строки аргументов!
+
+            if (!youtube)
+            {
+                // Удаляем блоки, где упоминается list-google.txt
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-tcp=443 --hostlist=.*?list-google\.txt"".*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+
+            if (!discord)
+            {
+                // Удаляем блоки с L7=discord и порты discord.media
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-udp=.*?--filter-l7=discord,stun.*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-tcp=.*?--hostlist-domains=discord\.media.*?--new", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+
+            // Добавляем Медиа-листы (Порнхаб/Инста) если они активированы
+            if (File.Exists(Path.Combine(listsPath, "list-media.txt")))
+            {
+                args = args.Replace("--hostlist-exclude=", $"--hostlist=\"{listsPrefix}list-media.txt\" --hostlist-exclude=");
+            }
+
+            // Добавляем Telegram (универсальный обход, которого нет во Flowseal)
             if (telegram)
             {
-                args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
-                args += $"--filter-udp=443 --ipset=\"{lists}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
+                args += $" --filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
+                args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
             }
 
-            return args;
+            return args.Trim();
         }
 
         public async Task TestConnectionAsync()

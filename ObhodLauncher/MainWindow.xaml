@@ -132,42 +132,57 @@
             <Setter Property="Template" Value="{StaticResource DangerButtonTemplate}"/>
         </Style>
 
-        <!-- Toggle Switch -->
+        <!-- Анимированный Toggle Switch без ошибок XDG -->
         <ControlTemplate x:Key="ToggleSwitchTemplate" TargetType="CheckBox">
             <StackPanel Orientation="Horizontal" Background="Transparent">
+                <!-- Обертка переключателя -->
                 <Border x:Name="SwitchBg" Width="44" Height="24" CornerRadius="12" Background="#40ffffff" BorderBrush="{StaticResource GlassBorder}" BorderThickness="1" VerticalAlignment="Center">
-                    <Ellipse x:Name="SwitchThumb" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0">
-                        <Ellipse.RenderTransform>
-                            <TranslateTransform x:Name="ThumbTranslate" X="0"/>
-                        </Ellipse.RenderTransform>
-                    </Ellipse>
+                    <!-- Ползунок. ВМЕСТО RenderTransform используем Margin (Left, Top, Right, Bottom) -->
+                    <Ellipse x:Name="SwitchThumb" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0"/>
                 </Border>
                 <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
+
             <ControlTemplate.Triggers>
+                <!-- Состояние ВКЛЮЧЕНО (Мгновенное применение при старте) -->
                 <Trigger Property="IsChecked" Value="True">
                     <Setter TargetName="SwitchBg" Property="Background" Value="{StaticResource AccentColor}"/>
                     <Setter TargetName="SwitchBg" Property="BorderThickness" Value="0"/>
+                    <Setter TargetName="SwitchThumb" Property="Margin" Value="23,0,0,0"/>
                 </Trigger>
-                <EventTrigger RoutedEvent="CheckBox.Checked">
+
+                <!-- Состояние ВЫКЛЮЧЕНО -->
+                <Trigger Property="IsChecked" Value="False">
+                    <Setter TargetName="SwitchBg" Property="Background" Value="#40ffffff"/>
+                    <Setter TargetName="SwitchBg" Property="BorderThickness" Value="1"/>
+                    <Setter TargetName="SwitchThumb" Property="Margin" Value="3,0,0,0"/>
+                </Trigger>
+
+                <!-- Анимация при включении (клик мышки) -->
+                <EventTrigger RoutedEvent="ToggleButton.Checked">
                     <BeginStoryboard>
                         <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="20" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
+                            <!-- Анимируем отступ слева направо (Thickness = Left, Top, Right, Bottom) -->
+                            <ThicknessAnimation Storyboard.TargetName="SwitchThumb" Storyboard.TargetProperty="Margin" 
+                                                From="3,0,0,0" To="23,0,0,0" Duration="0:0:0.15">
+                                <ThicknessAnimation.EasingFunction>
                                     <QuadraticEase EasingMode="EaseOut"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
+                                </ThicknessAnimation.EasingFunction>
+                            </ThicknessAnimation>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
-                <EventTrigger RoutedEvent="CheckBox.Unchecked">
+
+                <!-- Анимация при выключении -->
+                <EventTrigger RoutedEvent="ToggleButton.Unchecked">
                     <BeginStoryboard>
                         <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="ThumbTranslate" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
+                            <ThicknessAnimation Storyboard.TargetName="SwitchThumb" Storyboard.TargetProperty="Margin" 
+                                                From="23,0,0,0" To="3,0,0,0" Duration="0:0:0.15">
+                                <ThicknessAnimation.EasingFunction>
                                     <QuadraticEase EasingMode="EaseOut"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
+                                </ThicknessAnimation.EasingFunction>
+                            </ThicknessAnimation>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
@@ -179,6 +194,7 @@
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template" Value="{StaticResource ToggleSwitchTemplate}"/>
         </Style>
 

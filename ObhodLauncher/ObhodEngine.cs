@@ -178,7 +178,8 @@ namespace ZapretWPF
             string lists = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists") + "\\";
 
             string args = $"--wf-tcp=80,443,2053,2083,2087,2096,8443 --wf-udp=443,19294-19344,50000-50100 ";
-            string generalLists = $"--hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\"";
+            string mediaListArg = File.Exists(Path.Combine(lists, "list-media.txt")) ? $"--hostlist=\"{lists}list-media.txt\"" : "";
+            string generalLists = $"--hostlist=\"{lists}list-general.txt\" --hostlist=\"{lists}list-general-user.txt\" {mediaListArg}";
 
             switch (strategyIndex)
             {
@@ -520,27 +521,23 @@ namespace ZapretWPF
                 OnLog?.Invoke("=== Добавление обхода для медиа-ресурсов ===");
 
                 string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
-                string userListPath = Path.Combine(listsPath, "list-general-user.txt");
+                string mediaListPath = Path.Combine(listsPath, "list-media.txt"); // Теперь отдельный файл!
 
                 if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
 
                 string currentUserList = "";
-                if (File.Exists(userListPath))
+                if (File.Exists(mediaListPath))
                 {
-                    currentUserList = File.ReadAllText(userListPath);
+                    currentUserList = File.ReadAllText(mediaListPath);
                 }
 
                 string[] domainsToAdd = new string[]
                 {
-                    "pornhub.com",
-                    "phncdn.com", 
-                    "phprcdn.com", 
-                    "models.com",
-                    "gamma.app"
+                    "pornhub.com", "phncdn.com", "phprcdn.com", "models.com", "gamma.app"
                 };
 
                 int addedCount = 0;
-                using (StreamWriter sw = File.AppendText(userListPath))
+                using (StreamWriter sw = File.AppendText(mediaListPath))
                 {
                     foreach (string domain in domainsToAdd)
                     {
@@ -552,15 +549,8 @@ namespace ZapretWPF
                     }
                 }
 
-                if (addedCount > 0)
-                {
-                    OnLog?.Invoke($"[✓] Добавлено {addedCount} новых доменов в пользовательский список!");
-                    OnLog?.Invoke("Для применения изменений просто перезапустите обход (кнопка 'Остановка', затем 'Тест' или переустановка Службы).");
-                }
-                else
-                {
-                    OnLog?.Invoke("[✓] Все нужные домены уже присутствуют в списке.");
-                }
+                OnLog?.Invoke($"[✓] Медиа-ресурсы активированы (добавлено {addedCount} доменов).");
+                OnLog?.Invoke("Перезапустите обход (кнопка 'Остановка', затем 'Тест' или 'Установить Службу') для применения.");
             }
             catch (Exception ex)
             {

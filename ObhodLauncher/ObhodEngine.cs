@@ -201,7 +201,6 @@ namespace ZapretWPF
             // Если пользователь ОТКЛЮЧИЛ YouTube: аккуратно вырезаем блоки с list-google.txt
             if (!youtube)
             {
-                // Заменяем блоки, начиная с --filter и заканчивая --new, ЕСЛИ внутри есть list-google.txt
                 args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?list-google\.txt.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             }
 
@@ -222,7 +221,7 @@ namespace ZapretWPF
             args = args.Replace("%GameFilterTCP%", "1024-65535");
             args = args.Replace("%GameFilterUDP%", "1024-65535");
 
-            // --- МЕДИА ЛИСТЫ (Порнхаб/Инста) ---
+            // --- МЕДИА ЛИСТЫ ---
             if (File.Exists(Path.Combine(baseDir, "lists", "list-media.txt")))
             {
                 args = args.Replace("--hostlist-exclude=", $"--hostlist=\"{listsPrefix}list-media.txt\" --hostlist-exclude=");

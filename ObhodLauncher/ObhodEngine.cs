@@ -11,6 +11,7 @@ namespace ZapretWPF
     public class ZapretEngine
     {
         private Process _winwsProcess;
+        private bool _enableMediaBypass = false; 
         public Action<string> OnLog { get; set; }
 
         public bool IsServiceRunning()
@@ -156,6 +157,19 @@ namespace ZapretWPF
                     File.AppendAllText(userListPath, tgDomains);
                 }
             }
+
+            string mediaIpsetPath = Path.Combine(listsPath, "ipset-media.txt");
+            if (!File.Exists(mediaIpsetPath))
+            {
+                string mediaSubnets =
+                    // Meta (Instagram / Facebook) ASN
+                    "31.13.24.0/21\n31.13.64.0/18\n69.63.176.0/20\n69.171.224.0/19\n" +
+                    "74.119.76.0/22\n103.4.96.0/22\n129.236.0.0/16\n157.240.0.0/16\n" +
+                    "173.252.64.0/18\n179.60.192.0/22\n185.60.216.0/22\n204.15.20.0/22\n" +
+                    // Cloudflare / Fastly / Mindgeek (Pornhub / Models / Gamma)
+                    "66.254.114.0/24\n188.114.96.0/20\n104.18.0.0/15\n104.16.0.0/12";
+                File.WriteAllText(mediaIpsetPath, mediaSubnets);
+            }
         }
 
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
@@ -227,14 +241,25 @@ namespace ZapretWPF
                 args = args.Replace("--hostlist-exclude=", $"--hostlist=\"{listsPrefix}list-media.txt\" --hostlist-exclude=");
             }
 
-            // --- ТЕЛЕГРАМ ---
+            // ПАРАЛЛЕЛЬНЫЙ РЕЖИМ (Работает ВМЕСТЕ с основным Flowseal, не мешая ему)
             if (telegram)
             {
-                args += $" --filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
-                args += $" --filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
-            }
+                // Забываем про все предыдущие аргументы (сбрасываем строку), так как основную работу делает Flowseal
+                args = $"--wf-tcp=80,443,5222,5228 --wf-udp=443 ";
 
-            return args.Trim();
+                // 1. Телеграм
+                args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
+                args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
+
+                if (_enableMediaBypass)
+                {
+                    // Для Инсты и Медиа применяем жесткий fakedsplit с подменой SNI, который пробивает ТСПУ
+                    args += $"--filter-tcp=80,443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{binPrefix}tls_clienthello_max_ru.bin\" --new ";
+                    args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{binPrefix}quic_initial_www_google_com.bin\" --new ";
+                }
+
+                return args.Trim();
+            }
         }
 
         public async Task TestConnectionAsync()
@@ -417,140 +442,16 @@ namespace ZapretWPF
 
         public void PatchInstagramHosts()
         {
-            try
-            {
-                OnLog?.Invoke("=== Установка обхода для Instagram ===");
-                OnLog?.Invoke("1. Добавление чистых IP-адресов Meta в файл hosts...");
-
-                string hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
-
-                string hostsPatch =
-                    Environment.NewLine + "# --- SUPAMODD INSTAGRAM BYPASS ---" + Environment.NewLine +
-                    "57.144.244.34 instagram.com www.instagram.com" + Environment.NewLine +
-                    "57.144.244.192 static.cdninstagram.com graph.instagram.com i.instagram.com api.instagram.com edge-chat.instagram.com" + Environment.NewLine +
-                    "57.144.244.1 fbcdn.net facebook.com fb.com fbsbx.com" + Environment.NewLine +
-                    "31.13.66.63 scontent-hel3-1.cdninstagram.com scontent.cdninstagram.com" + Environment.NewLine +
-                    "57.144.244.128 static.xx.fbcdn.net scontent.xx.fbcdn.net" + Environment.NewLine +
-                    "31.13.67.20 scontent-hel3-1.xx.fbcdn.net" + Environment.NewLine +
-                    "# --- END SUPAMODD INSTAGRAM BYPASS ---" + Environment.NewLine;
-
-                string currentHosts = "";
-                if (File.Exists(hostsPath))
-                {
-                    currentHosts = File.ReadAllText(hostsPath);
-                }
-
-                if (!currentHosts.Contains("SUPAMODD INSTAGRAM BYPASS"))
-                {
-                    File.AppendAllText(hostsPath, hostsPatch);
-                    OnLog?.Invoke("[✓] Файл hosts успешно пропатчен!");
-                }
-                else
-                {
-                    OnLog?.Invoke("[✓] Файл hosts уже содержит патч для Instagram.");
-                }
-
-                OnLog?.Invoke("2. Настройка маршрутов DPI для Instagram...");
-                string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
-                string userListPath = Path.Combine(listsPath, "list-general-user.txt");
-
-                if (File.Exists(userListPath))
-                {
-                    string currentUserList = File.ReadAllText(userListPath);
-                    if (!currentUserList.Contains("instagram.com"))
-                    {
-                        string instaDomains = Environment.NewLine + "instagram.com" + Environment.NewLine + "cdninstagram.com" + Environment.NewLine + "facebook.com" + Environment.NewLine + "fbcdn.net";
-                        File.AppendAllText(userListPath, instaDomains);
-                        OnLog?.Invoke("[✓] Домены добавлены в список DPI обхода.");
-                    }
-                }
-
-                OnLog?.Invoke("=== Установка завершена ===");
-                OnLog?.Invoke("ОБЯЗАТЕЛЬНО нажмите 'Сброс сети' на второй вкладке, чтобы очистить кэш старых IP.");
-                OnLog?.Invoke("Instagram будет работать ТОЛЬКО при включенном обходе.");
-            }
-            catch (Exception ex)
-            {
-                OnLog?.Invoke($"[✗] Ошибка при прошивке hosts: {ex.Message}");
-                OnLog?.Invoke("Убедитесь, что ваш антивирус не блокирует изменение файла hosts.");
-            }
+            _enableMediaBypass = true;
+            OnLog?.Invoke("[✓] Обход Instagram активирован!");
+            OnLog?.Invoke("Нажмите 'Применить' на карточке Telegram (это запустит наш параллельный движок).");
         }
 
         public void AddMediaBypass()
         {
-            try
-            {
-                OnLog?.Invoke("=== Активация обхода для медиа-ресурсов ===");
-
-                // Шаг 1: Добавляем в локальный список winws (для DPI)
-                string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
-                string mediaListPath = Path.Combine(listsPath, "list-media.txt");
-
-                if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
-
-                string currentUserList = "";
-                if (File.Exists(mediaListPath))
-                {
-                    currentUserList = File.ReadAllText(mediaListPath);
-                }
-
-                string[] domainsToAdd = new string[]
-                {
-                    "pornhub.com", "phncdn.com", "phprcdn.com", "models.com", "gamma.app"
-                };
-
-                int addedCount = 0;
-                using (StreamWriter sw = File.AppendText(mediaListPath))
-                {
-                    foreach (string domain in domainsToAdd)
-                    {
-                        if (!currentUserList.Contains(domain))
-                        {
-                            sw.WriteLine(domain);
-                            addedCount++;
-                        }
-                    }
-                }
-
-                // Шаг 2: Патчим файл hosts для пробития блокировок по IP (если провайдер сбрасывает маршруты)
-                OnLog?.Invoke("Добавление чистых IP-адресов в файл hosts...");
-
-                string hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
-
-                // Используем чистые IP-адреса (Fastly / Cloudflare Edge), которые не забанены в РФ
-                string hostsPatch =
-                    Environment.NewLine + "# --- SUPAMODD MEDIA BYPASS ---" + Environment.NewLine +
-                    "104.18.23.238 models.com" + Environment.NewLine +
-                    "104.18.22.238 www.models.com" + Environment.NewLine +
-                    "188.114.97.2 gamma.app" + Environment.NewLine +
-                    "188.114.96.2 www.gamma.app" + Environment.NewLine +
-                    "66.254.114.41 pornhub.com www.pornhub.com" + Environment.NewLine +
-                    "# --- END SUPAMODD MEDIA BYPASS ---" + Environment.NewLine;
-
-                string currentHosts = "";
-                if (File.Exists(hostsPath))
-                {
-                    currentHosts = File.ReadAllText(hostsPath);
-                }
-
-                if (!currentHosts.Contains("SUPAMODD MEDIA BYPASS"))
-                {
-                    File.AppendAllText(hostsPath, hostsPatch);
-                    OnLog?.Invoke("[✓] IP-адреса медиа-ресурсов успешно добавлены в hosts!");
-                }
-                else
-                {
-                    OnLog?.Invoke("[✓] IP-адреса медиа-ресурсов уже прописаны в hosts.");
-                }
-
-                OnLog?.Invoke($"[✓] Списки обновлены (добавлено {addedCount} доменов для DPI).");
-                OnLog?.Invoke("Для полного доступа должен быть включен основной обход DPI (когда вкладка выйдет с тех. работ).");
-                OnLog?.Invoke("ОБЯЗАТЕЛЬНО нажмите кнопку 'Очистить' (Сброс сети)!");
-            }
-            catch (Exception ex)
-            {
-                OnLog?.Invoke($"[✗] Ошибка при добавлении медиа-ресурсов: {ex.Message}");
-            }
+            _enableMediaBypass = true;
+            OnLog?.Invoke("[✓] Обход Медиа-ресурсов активирован!");
+            OnLog?.Invoke("Нажмите 'Применить' на карточке Telegram (это запустит наш параллельный движок).");
         }
 
         private void RunAsAdmin(string fileName, string args)

@@ -182,6 +182,24 @@ namespace ZapretWPF
             }
         }
 
+        private void BtnTelegramBypass_Click(object sender, RoutedEventArgs e)
+        {
+            // Берем состояние чекбокса Telegram с 3-й вкладки
+            bool telegram = chkTelegram.IsChecked ?? false;
+
+            // Если включили Telegram, запускаем обход только для него (discord = false, youtube = false).
+            // В качестве стратегии передаем 0, так как логика телеграма у нас не зависит от выбранной стратегии.
+            if (telegram)
+            {
+                _engine.InstallService(false, false, true, 0);
+            }
+            else
+            {
+                // Если пользователь выключил галку и нажал Применить - останавливаем обход
+                _engine.RemoveService();
+            }
+        }
+
         // --- МЕТОДЫ КАСТОМНОЙ ПАНЕЛИ УПРАВЛЕНИЯ ОКНОМ ---
 
         private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

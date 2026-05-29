@@ -480,8 +480,9 @@ namespace ZapretWPF
         {
             try
             {
-                OnLog?.Invoke("=== Добавление обхода для медиа-ресурсов ===");
+                OnLog?.Invoke("=== Активация обхода для медиа-ресурсов ===");
 
+                // Шаг 1: Добавляем в локальный список winws (для DPI)
                 string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
                 string mediaListPath = Path.Combine(listsPath, "list-media.txt");
 
@@ -511,12 +512,44 @@ namespace ZapretWPF
                     }
                 }
 
-                OnLog?.Invoke($"[✓] Медиа-ресурсы активированы (добавлено {addedCount} доменов).");
-                OnLog?.Invoke("Перезапустите обход для применения.");
+                // Шаг 2: Патчим файл hosts для пробития блокировок по IP (если провайдер сбрасывает маршруты)
+                OnLog?.Invoke("Добавление чистых IP-адресов в файл hosts...");
+
+                string hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"drivers\etc\hosts");
+
+                // Используем чистые IP-адреса (Fastly / Cloudflare Edge), которые не забанены в РФ
+                string hostsPatch =
+                    Environment.NewLine + "# --- SUPAMODD MEDIA BYPASS ---" + Environment.NewLine +
+                    "104.18.23.238 models.com" + Environment.NewLine +
+                    "104.18.22.238 www.models.com" + Environment.NewLine +
+                    "188.114.97.2 gamma.app" + Environment.NewLine +
+                    "188.114.96.2 www.gamma.app" + Environment.NewLine +
+                    "66.254.114.41 pornhub.com www.pornhub.com" + Environment.NewLine +
+                    "# --- END SUPAMODD MEDIA BYPASS ---" + Environment.NewLine;
+
+                string currentHosts = "";
+                if (File.Exists(hostsPath))
+                {
+                    currentHosts = File.ReadAllText(hostsPath);
+                }
+
+                if (!currentHosts.Contains("SUPAMODD MEDIA BYPASS"))
+                {
+                    File.AppendAllText(hostsPath, hostsPatch);
+                    OnLog?.Invoke("[✓] IP-адреса медиа-ресурсов успешно добавлены в hosts!");
+                }
+                else
+                {
+                    OnLog?.Invoke("[✓] IP-адреса медиа-ресурсов уже прописаны в hosts.");
+                }
+
+                OnLog?.Invoke($"[✓] Списки обновлены (добавлено {addedCount} доменов для DPI).");
+                OnLog?.Invoke("Для полного доступа должен быть включен основной обход DPI (когда вкладка выйдет с тех. работ).");
+                OnLog?.Invoke("ОБЯЗАТЕЛЬНО нажмите кнопку 'Очистить' (Сброс сети)!");
             }
             catch (Exception ex)
             {
-                OnLog?.Invoke($"[✗] Ошибка при добавлении доменов: {ex.Message}");
+                OnLog?.Invoke($"[✗] Ошибка при добавлении медиа-ресурсов: {ex.Message}");
             }
         }
 

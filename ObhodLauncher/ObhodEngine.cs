@@ -175,91 +175,33 @@ namespace ZapretWPF
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            // Для максимальной надежности всегда используем АБСОЛЮТНЫЕ пути к папкам!
             string binPrefix = Path.Combine(baseDir, "bin") + "\\";
             string listsPrefix = Path.Combine(baseDir, "lists") + "\\";
 
-            string[] batFiles = {
-                "general.bat", "general (ALT).bat", "general (ALT2).bat", "general (ALT3).bat",
-                "general (ALT4).bat", "general (ALT5).bat", "general (ALT6).bat", "general (ALT7).bat",
-                "general (ALT8).bat", "general (ALT9).bat", "general (ALT10).bat", "general (ALT11).bat",
-                "general (FAKE TLS AUTO).bat", "general (FAKE TLS AUTO ALT).bat",
-                "general (FAKE TLS AUTO ALT2).bat", "general (FAKE TLS AUTO ALT3).bat",
-                "general (SIMPLE FAKE).bat", "general (SIMPLE FAKE ALT).bat", "general (SIMPLE FAKE ALT2).bat"
-            };
-
-            string batFilePath = Path.Combine(baseDir, "strategies", batFiles[strategyIndex]);
-            if (!File.Exists(batFilePath)) throw new Exception($"Файл стратегии не найден: {batFiles[strategyIndex]}");
-
             string args = "";
-            string[] lines = File.ReadAllLines(batFilePath);
-
-            // Ищем строку, где запускается winws
-            foreach (string line in lines)
-            {
-                if (line.Trim().StartsWith("start") && line.Contains("winws.exe"))
-                {
-                    int idx = line.IndexOf("winws.exe\"");
-                    if (idx != -1)
-                    {
-                        args = line.Substring(idx + 10).Trim();
-                        break;
-                    }
-                }
-            }
-
-            // Очищаем от кареток (^) и склеиваем в одну чистую строку
-            args = args.Replace("^", " ");
-            while (args.Contains("  ")) args = args.Replace("  ", " "); // Убираем двойные пробелы
-
-            // Если пользователь ОТКЛЮЧИЛ YouTube: аккуратно вырезаем блоки с list-google.txt
-            if (!youtube)
-            {
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?list-google\.txt.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            }
-
-            // Если пользователь ОТКЛЮЧИЛ Discord: аккуратно вырезаем блоки Discord
-            if (!discord)
-            {
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?discord,stun.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                args = System.Text.RegularExpressions.Regex.Replace(args, @"--filter-[^\s]+ [^-]*?discord\.media.*?--new\s", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            }
-
-            // ЗАМЕНА ПУТЕЙ И ПЕРЕМЕННЫХ
-            // ВАЖНО: Мы убираем кавычки вокруг %BIN% и %LISTS% в батнике, потому что мы добавим свои кавычки ко всем путям
-            args = args.Replace("\"%BIN%", "\"").Replace("\"%LISTS%", "\""); // Чистим оригинальные кавычки
-            args = args.Replace("%BIN%", $"\"{binPrefix}\"");
-            args = args.Replace("%LISTS%", $"\"{listsPrefix}\"");
-
-            // Игровые порты (Включаем высокие порты для видео CDN, как в оригинале Flowseal!)
-            args = args.Replace("%GameFilterTCP%", "1024-65535");
-            args = args.Replace("%GameFilterUDP%", "1024-65535");
-
-            // --- МЕДИА ЛИСТЫ ---
-            if (File.Exists(Path.Combine(baseDir, "lists", "list-media.txt")))
-            {
-                args = args.Replace("--hostlist-exclude=", $"--hostlist=\"{listsPrefix}list-media.txt\" --hostlist-exclude=");
-            }
 
             // ПАРАЛЛЕЛЬНЫЙ РЕЖИМ (Работает ВМЕСТЕ с основным Flowseal, не мешая ему)
+            // Применяем обход ТОЛЬКО к конкретным IP-адресам, чтобы не ломать трафик основного winws.exe
             if (telegram)
             {
-                // Забываем про все предыдущие аргументы (сбрасываем строку), так как основную работу делает Flowseal
-                args = $"--wf-tcp=80,443,5222,5228 --wf-udp=443 ";
+                args += $"--wf-tcp=80,443,5222,5228 --wf-udp=443 ";
 
                 // 1. Телеграм
                 args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
                 args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
 
+                // 2. Инстаграм и Медиа (если пользователь нажал кнопку на 3-й вкладке)
                 if (_enableMediaBypass)
                 {
                     // Для Инсты и Медиа применяем жесткий fakedsplit с подменой SNI, который пробивает ТСПУ
                     args += $"--filter-tcp=80,443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{binPrefix}tls_clienthello_max_ru.bin\" --new ";
                     args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{binPrefix}quic_initial_www_google_com.bin\" --new ";
                 }
-
-                return args.Trim();
             }
+
+            // Обязательный возврат значения в конце метода!
+            return args.Trim();
+        
         }
 
         public async Task TestConnectionAsync()

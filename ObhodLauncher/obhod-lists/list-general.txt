@@ -15,6 +15,10 @@ cloudflarestatus.com
 cloudflarestorage.com
 cloudflarestream.com
 cloudflaretest.com
+cloudfront.net
+live-video.net
+ttvnw.net
+twitch.tv
 dis.gd
 discord-attachments-uploads-prd.storage.googleapis.com
 discord.app
@@ -45,10 +49,4 @@ betterttv.net
 7tv.app
 7tv.io
 localizeapi.com
-signin.aws.amazon.com
-s3.amazonaws.com
-amazonaws.com
-awsapps.com
-sso.amazonaws.com
-console.aws.a2z.com
-cloudfront.net
+klipy.com

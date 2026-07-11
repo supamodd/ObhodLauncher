@@ -422,8 +422,8 @@
                         </TabItem.Header>
                         <Grid Margin="0,20,0,0">
 
-                            <!-- Основной контент вкладки (Обернут в Grid, чтобы сверху наложить Blur-панель) -->
-                            <Grid x:Name="Tab1Content" IsEnabled="False">
+                            <!-- Основной контент вкладки -->
+                            <Grid x:Name="Tab1Content" IsEnabled="True">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -494,26 +494,6 @@
                                     </StackPanel>
                                 </Grid>
                             </Grid>
-
-                            <!-- ЗАГЛУШКА: ТЕХ РАБОТЫ (Перекрывает всё) -->
-                            <Border Background="#9909090b" CornerRadius="12" Margin="-10">
-                                <!-- Эффект блюра -->
-                                <Border.Effect>
-                                    <BlurEffect Radius="2" KernelType="Gaussian"/>
-                                </Border.Effect>
-                            </Border>
-
-                            <!-- Текст заглушки (Без блюра, чтобы читался) -->
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
-                                <TextBlock Text="⚙️" FontSize="70" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                    <TextBlock.Effect>
-                                        <DropShadowEffect Color="White" BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
-                                    </TextBlock.Effect>
-                                </TextBlock>
-                                <TextBlock Text="ВКЛАДКА НА ТЕХОБСЛУЖИВАНИИ" FontSize="26" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
-                                <TextBlock Text="Мы дорабатываем обход DPI. Используйте другие вкладки." FontSize="14" Foreground="#a1a1aa" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                            </StackPanel>
-
                         </Grid>
                     </TabItem>
 

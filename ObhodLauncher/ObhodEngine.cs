@@ -11,7 +11,7 @@ namespace ZapretWPF
     public class ZapretEngine
     {
         private Process _winwsProcess;
-        private bool _enableMediaBypass = false; 
+        private bool _enableMediaBypass = false;
         public Action<string> OnLog { get; set; }
 
         public bool IsServiceRunning()
@@ -50,7 +50,7 @@ namespace ZapretWPF
                     StartInfo = new ProcessStartInfo
                     {
                         FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe"),
-                        WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin"), // ОЧЕНЬ ВАЖНО ДЛЯ ALT 11!
+                        WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin"),
                         Arguments = args,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -96,10 +96,10 @@ namespace ZapretWPF
         public void InstallService(bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
         {
             CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex, true); // true для полных путей!
+            string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex, true);
             string binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
 
-            string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";
+            string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";
 
             RunAsAdmin("sc.exe", "stop ObhodService");
             RunAsAdmin("sc.exe", "delete ObhodService");
@@ -122,7 +122,7 @@ namespace ZapretWPF
             string listsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lists");
             if (!Directory.Exists(listsPath)) Directory.CreateDirectory(listsPath);
 
-            string[] dummyFiles = { "ipset-exclude-user.txt", "list-general-user.txt", "list-exclude-user.txt" };
+            string[] dummyFiles = { "ipset-exclude-user.txt", "list-general-user.txt", "list-exclude-user.txt", "list-general.txt", "list-google.txt", "ipset-all.txt" };
             string[] emptyFiles = { "ipset-exclude.txt", "list-exclude.txt" };
 
             foreach (var file in dummyFiles)
@@ -162,11 +162,9 @@ namespace ZapretWPF
             if (!File.Exists(mediaIpsetPath))
             {
                 string mediaSubnets =
-                    // Meta (Instagram / Facebook) ASN
                     "31.13.24.0/21\n31.13.64.0/18\n69.63.176.0/20\n69.171.224.0/19\n" +
                     "74.119.76.0/22\n103.4.96.0/22\n129.236.0.0/16\n157.240.0.0/16\n" +
                     "173.252.64.0/18\n179.60.192.0/22\n185.60.216.0/22\n204.15.20.0/22\n" +
-                    // Cloudflare / Fastly / Mindgeek 
                     "66.254.114.0/24\n188.114.96.0/20\n104.18.0.0/15\n104.16.0.0/12";
                 File.WriteAllText(mediaIpsetPath, mediaSubnets);
             }
@@ -175,29 +173,101 @@ namespace ZapretWPF
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string strategiesDir = Path.Combine(baseDir, "strategies");
+            string strategyFile = GetStrategyFileName(strategyIndex);
+            string strategyPath = Path.Combine(strategiesDir, strategyFile);
+
+            if (File.Exists(strategyPath))
+            {
+                OnLog?.Invoke($"[Стратегия] {strategyFile}");
+                string args = BuildArgsFromStrategyFile(strategyPath, baseDir);
+                if (!string.IsNullOrWhiteSpace(args))
+                    return args;
+            }
+
+            OnLog?.Invoke($"[Предупреждение] Файл стратегии не найден: {strategyPath}. Используется базовая стратегия.");
+            return BuildDefaultArguments(baseDir);
+        }
+
+        private string GetStrategyFileName(int strategyIndex)
+        {
+            return strategyIndex switch
+            {
+                0 => "general.bat",
+                1 => "general (ALT).bat",
+                2 => "general (ALT2).bat",
+                3 => "general (ALT3).bat",
+                4 => "general (ALT4).bat",
+                5 => "general (ALT5).bat",
+                6 => "general (ALT6).bat",
+                7 => "general (ALT7).bat",
+                8 => "general (ALT8).bat",
+                9 => "general (ALT9).bat",
+                10 => "general (ALT10).bat",
+                11 => "general (ALT11).bat",
+                12 => "general (FAKE TLS AUTO).bat",
+                13 => "general (FAKE TLS AUTO ALT).bat",
+                14 => "general (FAKE TLS AUTO ALT2).bat",
+                15 => "general (FAKE TLS AUTO ALT3).bat",
+                16 => "general (SIMPLE FAKE).bat",
+                17 => "general (SIMPLE FAKE ALT).bat",
+                18 => "general (SIMPLE FAKE ALT2).bat",
+                _ => "general.bat"
+            };
+        }
+
+        private string BuildArgsFromStrategyFile(string batPath, string baseDir)
+        {
+            try
+            {
+                string content = File.ReadAllText(batPath);
+
+                content = content.Replace("^\r\n", " ")
+                                 .Replace("^\n", " ")
+                                 .Replace("^\r", " ");
+
+                int winwsIndex = content.IndexOf("winws.exe\"");
+                if (winwsIndex < 0)
+                {
+                    OnLog?.Invoke("[Ошибка] Не найдена командная строка winws в .bat файле.");
+                    return "";
+                }
+
+                int startIndex = winwsIndex + "winws.exe\"".Length;
+                int endIndex = content.IndexOf('\n', startIndex);
+                if (endIndex < 0) endIndex = content.Length;
+
+                string args = content.Substring(startIndex, endIndex - startIndex).Trim();
+
+                string binPath = Path.Combine(baseDir, "bin") + "\\";
+                string listsPath = Path.Combine(baseDir, "lists") + "\\";
+
+                args = args.Replace("%BIN%", binPath);
+                args = args.Replace("%LISTS%", listsPath);
+                args = args.Replace("%GameFilterTCP%", "");
+                args = args.Replace("%GameFilterUDP%", "");
+                args = args.Replace("^!", "!");
+
+                while (args.Contains("  "))
+                    args = args.Replace("  ", " ");
+
+                return args;
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"[Ошибка] Не удалось распарсить стратегию: {ex.Message}");
+                return "";
+            }
+        }
+
+        private string BuildDefaultArguments(string baseDir)
+        {
             string binPrefix = Path.Combine(baseDir, "bin") + "\\";
             string listsPrefix = Path.Combine(baseDir, "lists") + "\\";
 
-            string args = "";
-
-            if (telegram)
-            {
-                args += $"--wf-tcp=80,443,5222,5228 --wf-udp=443 ";
-
-                // 1. Телеграм
-                args += $"--filter-tcp=80,443,5222,5228 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=split2 --dpi-desync-split-pos=2 --dpi-desync-any-protocol=1 --new ";
-                args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-telegram.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-any-protocol=1 --new ";
-
-                // 2. Инстаграм и Медиа
-                if (_enableMediaBypass)
-                {
-                    args += $"--filter-tcp=80,443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake,fakedsplit --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2 --dpi-desync-repeats=8 --dpi-desync-fake-tls-mod=rnd,dupsid,sni=www.google.com --dpi-desync-fake-http=\"{binPrefix}tls_clienthello_max_ru.bin\" --new ";
-                    args += $"--filter-udp=443 --ipset=\"{listsPrefix}ipset-media.txt\" --dpi-desync=fake --dpi-desync-repeats=11 --dpi-desync-fake-quic=\"{binPrefix}quic_initial_www_google_com.bin\" --new ";
-                }
-            }
-
-            return args.Trim();
-        
+            return $"--wf-tcp=80,443 --wf-udp=443 " +
+                   $"--filter-udp=443 --hostlist=\"{listsPrefix}list-general.txt\" --dpi-desync=fake --dpi-desync-repeats=6 --dpi-desync-fake-quic=\"{binPrefix}quic_initial_www_google_com.bin\" --new " +
+                   $"--filter-tcp=80,443 --hostlist=\"{listsPrefix}list-general.txt\" --dpi-desync=multisplit --dpi-desync-split-seqovl=568 --dpi-desync-split-pos=1 --dpi-desync-split-seqovl-pattern=\"{binPrefix}tls_clienthello_4pda_to.bin\"";
         }
 
         public async Task TestConnectionAsync()

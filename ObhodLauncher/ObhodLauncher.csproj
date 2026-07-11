@@ -32,5 +32,8 @@
     <Resource Include="logo.png" />
     <Resource Include="obhod_logo.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="vpn-core\" />
+  </ItemGroup>
 
 </Project>

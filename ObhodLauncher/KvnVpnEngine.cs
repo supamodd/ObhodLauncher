@@ -114,7 +114,7 @@ namespace ZapretWPF
         {
             string configPath = Path.Combine(_tempDir, "sing-box-config.json");
             string json = BuildSingBoxConfig(config);
-            File.WriteAllText(configPath, json, Encoding.UTF8);
+            File.WriteAllText(configPath, json, new UTF8Encoding(false));
 
             OnLog?.Invoke("[КВН] sing-box конфиг сохранён: " + configPath);
             OnLog?.Invoke("[КВН] Запуск sing-box в режиме TUN...");
@@ -159,7 +159,7 @@ namespace ZapretWPF
         {
             string configPath = Path.Combine(_tempDir, "xray-config.json");
             string json = BuildXrayConfig(config);
-            File.WriteAllText(configPath, json, Encoding.UTF8);
+            File.WriteAllText(configPath, json, new UTF8Encoding(false));
 
             OnLog?.Invoke("[КВН] xray конфиг сохранён: " + configPath);
             OnLog?.Invoke("[КВН] Запуск xray...");
@@ -214,26 +214,12 @@ namespace ZapretWPF
             var config = new JsonObject
             {
                 ["log"] = new JsonObject { ["level"] = "info" },
-                ["dns"] = new JsonObject
-                {
-                    ["servers"] = new JsonArray
-                    {
-                        new JsonObject { ["tag"] = "google", ["address"] = "tls://8.8.8.8" },
-                        new JsonObject { ["tag"] = "local", ["address"] = "223.5.5.5", ["detour"] = "direct" }
-                    },
-                    ["rules"] = new JsonArray
-                    {
-                        new JsonObject { ["geosite"] = "cn", ["server"] = "local" }
-                    },
-                    ["final"] = "google",
-                    ["strategy"] = "ipv4_only"
-                },
                 ["inbounds"] = new JsonArray
                 {
                     new JsonObject
                     {
                         ["type"] = "tun",
-                        ["inet4_address"] = "172.19.0.1/30",
+                        ["address"] = "172.19.0.1/30",
                         ["auto_route"] = true,
                         ["strict_route"] = false,
                         ["stack"] = "gvisor",

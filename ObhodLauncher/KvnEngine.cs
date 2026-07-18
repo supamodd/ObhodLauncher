@@ -28,6 +28,8 @@ namespace ZapretWPF
         public string PublicKey { get; set; } = "";
         public string ShortId { get; set; } = "";
         public string SpiderX { get; set; } = "";
+        public string Flow { get; set; } = "";
+
 
         public string DisplayInfo => $"{Protocol} • {Address}:{Port} • {Network} • {Security}";
     }
@@ -179,7 +181,8 @@ namespace ZapretWPF
                 Fingerprint = GetValue(query, "fp") ?? "",
                 PublicKey = GetValue(query, "pbk") ?? "",
                 ShortId = GetValue(query, "sid") ?? "",
-                SpiderX = GetValue(query, "spx") ?? ""
+                SpiderX = GetValue(query, "spx") ?? "",
+                Flow = GetValue(query, "flow") ?? ""
             };
         }
 

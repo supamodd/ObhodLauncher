@@ -222,8 +222,7 @@ namespace ZapretWPF
                         ["address"] = "172.19.0.1/30",
                         ["auto_route"] = true,
                         ["strict_route"] = false,
-                        ["stack"] = "gvisor",
-                        ["sniff"] = true
+                        ["stack"] = "gvisor"
                     }
                 },
                 ["outbounds"] = new JsonArray
@@ -246,13 +245,27 @@ namespace ZapretWPF
         {
             JsonObject tls = cfg.Security.ToLowerInvariant() switch
             {
-                "tls" => new JsonObject { ["enabled"] = true, ["server_name"] = cfg.Sni, ["insecure"] = false },
+                "tls" => new JsonObject
+                {
+                    ["enabled"] = true,
+                    ["server_name"] = cfg.Sni,
+                    ["insecure"] = false
+                },
                 "reality" => new JsonObject
                 {
                     ["enabled"] = true,
                     ["server_name"] = cfg.Sni,
-                    ["insecure"] = false,
-                    ["utls"] = new JsonObject { ["enabled"] = true, ["fingerprint"] = cfg.Fingerprint }
+                    ["reality"] = new JsonObject
+                    {
+                        ["enabled"] = true,
+                        ["public_key"] = cfg.PublicKey,
+                        ["short_id"] = cfg.ShortId
+                    },
+                    ["utls"] = new JsonObject
+                    {
+                        ["enabled"] = true,
+                        ["fingerprint"] = string.IsNullOrWhiteSpace(cfg.Fingerprint) ? "chrome" : cfg.Fingerprint
+                    }
                 },
                 _ => new JsonObject { ["enabled"] = false }
             };
@@ -282,6 +295,13 @@ namespace ZapretWPF
                 ["uuid"] = cfg.Id,
                 ["tls"] = tls
             };
+
+            string flow = cfg.Flow;
+            if (string.IsNullOrWhiteSpace(flow) && cfg.Security.ToLowerInvariant() == "reality")
+                flow = "xtls-rprx-vision";
+
+            if (!string.IsNullOrWhiteSpace(flow))
+                outbound["flow"] = flow;
 
             if (transport != null)
                 outbound["transport"] = transport;
@@ -373,6 +393,17 @@ namespace ZapretWPF
             if (cfg.Security.ToLowerInvariant() == "tls")
                 streamSettings["tlsSettings"] = new JsonObject { ["serverName"] = cfg.Sni };
 
+            if (cfg.Security.ToLowerInvariant() == "reality")
+            {
+                streamSettings["realitySettings"] = new JsonObject
+                {
+                    ["serverName"] = cfg.Sni,
+                    ["publicKey"] = cfg.PublicKey,
+                    ["shortId"] = cfg.ShortId,
+                    ["fingerprint"] = string.IsNullOrWhiteSpace(cfg.Fingerprint) ? "chrome" : cfg.Fingerprint
+                };
+            }
+
             if (cfg.Network.ToLowerInvariant() == "ws")
                 streamSettings["wsSettings"] = new JsonObject { ["path"] = cfg.Path, ["headers"] = new JsonObject { ["Host"] = cfg.Host } };
 
@@ -389,12 +420,12 @@ namespace ZapretWPF
                     {
                         ["vnext"] = new JsonArray
                         {
-                            new JsonObject
-                            {
-                                ["address"] = cfg.Address,
-                                ["port"] = cfg.Port,
-                                ["users"] = new JsonArray { new JsonObject { ["id"] = cfg.Id, ["encryption"] = "none" } }
-                            }
+                         new JsonObject
+                         {
+                             ["id"] = cfg.Id,
+                             ["encryption"] = "none",
+                             ["flow"] = string.IsNullOrWhiteSpace(cfg.Flow) ? "" : cfg.Flow
+                         }
                         }
                     },
                     ["streamSettings"] = streamSettings

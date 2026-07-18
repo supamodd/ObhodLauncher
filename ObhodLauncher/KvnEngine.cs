@@ -42,11 +42,16 @@ namespace ZapretWPF
         {
             var handler = new HttpClientHandler
             {
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
+                AllowAutoRedirect = true,
+                AutomaticDecompression = DecompressionMethods.All
             };
             _client = new HttpClient(handler);
-            _client.Timeout = TimeSpan.FromSeconds(15);
-            _client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            _client.Timeout = TimeSpan.FromSeconds(20);
+            _client.DefaultRequestHeaders.Add("User-Agent", "v2rayN/6.0");
+            _client.DefaultRequestHeaders.Add("Accept", "*/*");
+            _client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
         }
 
         public async Task<string> GetRawSubscriptionAsync(string url)
@@ -59,7 +64,10 @@ namespace ZapretWPF
             }
             catch (Exception ex)
             {
-                OnLog?.Invoke($"[КВН] Ошибка загрузки: {ex.Message}");
+                string details = ex.Message;
+                if (ex.InnerException != null)
+                    details += " | Inner: " + ex.InnerException.Message;
+                OnLog?.Invoke($"[КВН] Ошибка загрузки: {details}");
                 LastRawSubscription = "";
                 return "";
             }
@@ -81,14 +89,32 @@ namespace ZapretWPF
                 return configs;
             }
 
+            string trimmed = raw.Trim();
+
+            // Если пришла HTML-страница вместо подписки
+            if (trimmed.StartsWith("<") || trimmed.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) || trimmed.Contains("<html", StringComparison.OrdinalIgnoreCase))
+            {
+                OnLog?.Invoke("[КВН] ❌ Получена HTML-страница, а не подписка.");
+                OnLog?.Invoke("[КВН] Откройте страницу подписки в браузере, нажмите кнопку 'Get link' / 'Получить ссылку' и вставьте именно ту ссылку.");
+                return configs;
+            }
+
             string decoded;
             try
             {
-                decoded = DecodeBase64(raw.Trim().Replace("\n", "").Replace("\r", ""));
+                decoded = DecodeBase64(trimmed.Replace("\n", "").Replace("\r", ""));
             }
             catch
             {
                 decoded = raw;
+            }
+
+            // Если исходный текст сам содержит ссылки (plain text подписка), используем его
+            if (trimmed.Contains("vless://", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.Contains("vmess://", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.Contains("trojan://", StringComparison.OrdinalIgnoreCase))
+            {
+                decoded = trimmed;
             }
 
             var lines = decoded.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
@@ -101,6 +127,13 @@ namespace ZapretWPF
                 var cfg = ParseLink(line);
                 if (cfg != null)
                     configs.Add(cfg);
+            }
+
+            if (configs.Count == 0)
+            {
+                OnLog?.Invoke("[КВН] ⚠️ Не удалось распарсить подписку.");
+                OnLog?.Invoke($"[КВН] Первые 200 символов ответа: {(trimmed.Length > 200 ? trimmed.Substring(0, 200) + "..." : trimmed)}");
+                OnLog?.Invoke("[КВН] Если это Clash/YAML конфиг — пока не поддерживается. Скопируйте отдельный VLESS/Vmess/Trojan конфиг.");
             }
 
             OnLog?.Invoke($"[КВН] Найдено конфигураций: {configs.Count}");

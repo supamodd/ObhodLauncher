@@ -60,12 +60,15 @@ namespace ZapretWPF
             var coreType = DetectCore();
             if (coreType == VpnCoreType.None)
             {
-                OnLog?.Invoke("[КВН] ❌ Не найдено ядро VPN. Создайте папку 'vpn-core' рядом с .exe и положите туда sing-box.exe или xray.exe");
+                OnLog?.Invoke("[КВН] ❌ Не найдено ядро VPN.");
+                OnLog?.Invoke("[КВН] Создайте папку 'vpn-core' рядом с .exe и положите туда sing-box.exe или xray.exe");
                 OnLog?.Invoke("[КВН] sing-box рекомендуется для полного TUN-туннеля.");
                 return false;
             }
 
-            OnLog?.Invoke($"[КВН] Используется ядро: {coreType}");
+            string corePath = GetCorePath(coreType);
+            OnLog?.Invoke($"[КВН] Используется ядро: {coreType} ({corePath})");
+            OnLog?.Invoke($"[КВН] Выбран сервер: {config.Remark} | {config.Protocol} | {config.Address}:{config.Port} | {config.Network} | {config.Security}");
 
             try
             {
@@ -113,6 +116,7 @@ namespace ZapretWPF
             string json = BuildSingBoxConfig(config);
             File.WriteAllText(configPath, json, Encoding.UTF8);
 
+            OnLog?.Invoke("[КВН] sing-box конфиг сохранён: " + configPath);
             OnLog?.Invoke("[КВН] Запуск sing-box в режиме TUN...");
 
             _coreProcess = new Process
@@ -136,11 +140,12 @@ namespace ZapretWPF
             _coreProcess.BeginOutputReadLine();
             _coreProcess.BeginErrorReadLine();
 
-            await Task.Delay(1500);
+            await Task.Delay(2000);
 
             if (_coreProcess.HasExited)
             {
                 OnLog?.Invoke($"[КВН] sing-box не запустился. Код: {_coreProcess.ExitCode}");
+                OnLog?.Invoke("[КВН] Проверьте конфиг вручную: " + configPath);
                 _coreProcess = null;
                 return false;
             }
@@ -156,6 +161,7 @@ namespace ZapretWPF
             string json = BuildXrayConfig(config);
             File.WriteAllText(configPath, json, Encoding.UTF8);
 
+            OnLog?.Invoke("[КВН] xray конфиг сохранён: " + configPath);
             OnLog?.Invoke("[КВН] Запуск xray...");
 
             _coreProcess = new Process
@@ -179,11 +185,12 @@ namespace ZapretWPF
             _coreProcess.BeginOutputReadLine();
             _coreProcess.BeginErrorReadLine();
 
-            await Task.Delay(1500);
+            await Task.Delay(2000);
 
             if (_coreProcess.HasExited)
             {
                 OnLog?.Invoke($"[КВН] xray не запустился. Код: {_coreProcess.ExitCode}");
+                OnLog?.Invoke("[КВН] Проверьте конфиг вручную: " + configPath);
                 _coreProcess = null;
                 return false;
             }

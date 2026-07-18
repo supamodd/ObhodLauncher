@@ -40,8 +40,23 @@ namespace ZapretWPF
             }
 
             CreateDummyListsIfMissing();
+
+            string winwsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
+            if (!File.Exists(winwsPath))
+            {
+                OnLog?.Invoke($"[КРИТИЧЕСКАЯ ОШИБКА] winws.exe не найден: {winwsPath}");
+                return;
+            }
+
             string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex, false);
-            OnLog?.Invoke($"[Запуск winws.exe] Стратегия #{strategyIndex + 1}\nАргументы: {args}\n");
+            if (string.IsNullOrWhiteSpace(args))
+            {
+                OnLog?.Invoke("[КРИТИЧЕСКАЯ ОШИБКА] Не удалось построить аргументы для winws.");
+                return;
+            }
+
+            OnLog?.Invoke($"[Запуск winws.exe] Стратегия #{strategyIndex + 1}");
+            OnLog?.Invoke($"[Аргументы] {args}");
 
             try
             {
@@ -49,7 +64,7 @@ namespace ZapretWPF
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe"),
+                        FileName = winwsPath,
                         WorkingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin"),
                         Arguments = args,
                         UseShellExecute = false,
@@ -62,11 +77,20 @@ namespace ZapretWPF
                 _winwsProcess.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) OnLog?.Invoke(e.Data); };
                 _winwsProcess.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) OnLog?.Invoke("ОШИБКА WINWS: " + e.Data); };
 
-                _winwsProcess.Start();
+                bool started = _winwsProcess.Start();
+                if (!started)
+                {
+                    OnLog?.Invoke("[КРИТИЧЕСКАЯ ОШИБКА] Process.Start вернул false.");
+                    _winwsProcess = null;
+                    return;
+                }
+
                 _winwsProcess.BeginOutputReadLine();
                 _winwsProcess.BeginErrorReadLine();
 
-                if (_winwsProcess.WaitForExit(500))
+                System.Threading.Thread.Sleep(800);
+
+                if (_winwsProcess.HasExited)
                 {
                     OnLog?.Invoke($"[КРИТИЧЕСКАЯ ОШИБКА] winws.exe мгновенно закрылся. Код: {_winwsProcess.ExitCode}.");
                     _winwsProcess = null;
@@ -222,10 +246,14 @@ namespace ZapretWPF
             {
                 string content = File.ReadAllText(batPath);
 
-                content = content.Replace("^\r\n", " ")
-                                 .Replace("^\n", " ")
-                                 .Replace("^\r", " ");
+                // Убираем строки с GameFilter-переменными (они пустые без service.bat)
+                content = System.Text.RegularExpressions.Regex.Replace(content, @".*%GameFilterTCP%.*[\r\n]+", "");
+                content = System.Text.RegularExpressions.Regex.Replace(content, @".*%GameFilterUDP%.*[\r\n]+", "");
 
+                // Убираем переносы строк ^ (с возможными пробелами вокруг, включая конец файла)
+                content = System.Text.RegularExpressions.Regex.Replace(content, @"\s*\^\s*(\r\n|\n|\r|$)", " ");
+
+                // Находим командную строку winws
                 int winwsIndex = content.IndexOf("winws.exe\"");
                 if (winwsIndex < 0)
                 {
@@ -239,6 +267,7 @@ namespace ZapretWPF
 
                 string args = content.Substring(startIndex, endIndex - startIndex).Trim();
 
+                // Заменяем переменные bat-файла на реальные пути
                 string binPath = Path.Combine(baseDir, "bin") + "\\";
                 string listsPath = Path.Combine(baseDir, "lists") + "\\";
 
@@ -246,8 +275,11 @@ namespace ZapretWPF
                 args = args.Replace("%LISTS%", listsPath);
                 args = args.Replace("%GameFilterTCP%", "");
                 args = args.Replace("%GameFilterUDP%", "");
+
+                // Раскрываем bat-экранирование ^! -> !
                 args = args.Replace("^!", "!");
 
+                // Убираем лишние пробелы
                 while (args.Contains("  "))
                     args = args.Replace("  ", " ");
 

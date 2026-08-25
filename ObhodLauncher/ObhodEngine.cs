@@ -18,16 +18,48 @@ namespace ZapretWPF
         {
             try
             {
-                ServiceController sc = new ServiceController("ObhodService");
-                if (sc.Status == ServiceControllerStatus.Running)
+                using var service = new ServiceController("ObhodService");
+
+                service.Refresh();
+
+                if (service.Status == ServiceControllerStatus.Running)
+                {
                     return true;
+                }
             }
-            catch
+            catch (InvalidOperationException)
+            {
+                // Служба ещё не создана
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"Ошибка проверки службы: {ex.Message}");
+            }
+
+            try
             {
                 Process[] processes = Process.GetProcessesByName("winws");
-                if (processes.Length > 0)
-                    return true;
+
+                foreach (Process process in processes)
+                {
+                    try
+                    {
+                        if (!process.HasExited)
+                        {
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                        // Процесс мог завершиться во время проверки
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"Ошибка проверки winws.exe: {ex.Message}");
+            }
+
             return false;
         }
 
@@ -117,21 +149,179 @@ namespace ZapretWPF
             }
         }
 
-        public void InstallService(bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
+        public void InstallService(
+    bool enableDiscord,
+    bool enableYouTube,
+    bool enableTelegram,
+    int strategyIndex)
         {
-            CreateDummyListsIfMissing();
-            string args = GetArguments(enableDiscord, enableYouTube, enableTelegram, strategyIndex, true);
-            string binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "winws.exe");
+            try
+            {
+                CreateDummyListsIfMissing();
 
-            string scArgs = $"create \"ObhodService\" binPath= \"\\\"{binPath}\\\" {args.Replace("\"", "\\\\\"")}\" start= auto displayname= \"ObhodLauncher Background Service\"";
+                string winwsPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "bin",
+                    "winws.exe");
 
-            RunAsAdmin("sc.exe", "stop ObhodService");
-            RunAsAdmin("sc.exe", "delete ObhodService");
-            RunAsAdmin("sc.exe", scArgs);
-            RunAsAdmin("sc.exe", "start ObhodService");
+                string windivertDllPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "bin",
+                    "WinDivert.dll");
 
-            OnLog?.Invoke($"=== Служба установлена (Стратегия #{strategyIndex + 1}) ===");
-            OnLog?.Invoke("Программу можно закрывать, обход работает в фоне.");
+                string windivertSysPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "bin",
+                    "WinDivert64.sys");
+
+                if (!File.Exists(winwsPath))
+                {
+                    OnLog?.Invoke($"[ОШИБКА] Не найден winws.exe:");
+                    OnLog?.Invoke(winwsPath);
+                    return;
+                }
+
+                if (!File.Exists(windivertDllPath))
+                {
+                    OnLog?.Invoke($"[ОШИБКА] Не найден WinDivert.dll:");
+                    OnLog?.Invoke(windivertDllPath);
+                    return;
+                }
+
+                if (!File.Exists(windivertSysPath))
+                {
+                    OnLog?.Invoke($"[ОШИБКА] Не найден WinDivert64.sys:");
+                    OnLog?.Invoke(windivertSysPath);
+                    return;
+                }
+
+                string args = GetArguments(
+                    enableDiscord,
+                    enableYouTube,
+                    enableTelegram,
+                    strategyIndex,
+                    true);
+
+                if (string.IsNullOrWhiteSpace(args))
+                {
+                    OnLog?.Invoke("[ОШИБКА] Аргументы для winws.exe пустые.");
+                    return;
+                }
+
+                OnLog?.Invoke("[СЛУЖБА] Путь к winws.exe:");
+                OnLog?.Invoke(winwsPath);
+
+                OnLog?.Invoke("[СЛУЖБА] Аргументы:");
+                OnLog?.Invoke(args);
+
+                // Останавливаем старую службу, если она существует
+                RunScCommand(
+                    "stop",
+                    "ObhodService");
+
+                System.Threading.Thread.Sleep(500);
+
+                // Удаляем старую службу
+                RunScCommand(
+                    "delete",
+                    "ObhodService");
+
+                System.Threading.Thread.Sleep(1000);
+
+                /*
+                 * Важно:
+                 * binPath= и путь к exe передаются отдельными аргументами.
+                 * Это исправляет проблему с кавычками и пробелами в пути.
+                 */
+                string serviceBinaryPath =
+                    $"\"{winwsPath}\" {args}";
+
+                CommandResult createResult = RunScCommand(
+                    "create",
+                    "ObhodService",
+                    "type=",
+                    "own",
+                    "start=",
+                    "auto",
+                    "binPath=",
+                    serviceBinaryPath,
+                    "DisplayName=",
+                    "ObhodLauncher Background Service");
+
+                if (createResult.ExitCode != 0)
+                {
+                    OnLog?.Invoke(
+                        $"[ОШИБКА] Не удалось создать службу. Код: {createResult.ExitCode}");
+
+                    if (!string.IsNullOrWhiteSpace(createResult.Output))
+                    {
+                        OnLog?.Invoke(createResult.Output);
+                    }
+
+                    return;
+                }
+
+                RunScCommand(
+                    "description",
+                    "ObhodService",
+                    "Обход DPI через winws.exe и WinDivert");
+
+                CommandResult startResult = RunScCommand(
+                    "start",
+                    "ObhodService");
+
+                if (startResult.ExitCode != 0)
+                {
+                    OnLog?.Invoke(
+                        $"[ОШИБКА] Служба создана, но не запустилась. Код: {startResult.ExitCode}");
+
+                    if (!string.IsNullOrWhiteSpace(startResult.Output))
+                    {
+                        OnLog?.Invoke(startResult.Output);
+                    }
+
+                    OnLog?.Invoke("");
+                    OnLog?.Invoke("Для диагностики выполни от имени администратора:");
+                    OnLog?.Invoke("sc query ObhodService");
+                    OnLog?.Invoke("sc qc ObhodService");
+                    OnLog?.Invoke("sc start ObhodService");
+
+                    return;
+                }
+
+                System.Threading.Thread.Sleep(1500);
+
+                ServiceControllerStatus? status =
+                    GetServiceStatus("ObhodService");
+
+                if (status == ServiceControllerStatus.Running)
+                {
+                    OnLog?.Invoke("");
+                    OnLog?.Invoke("=== Служба успешно установлена и запущена ===");
+                    OnLog?.Invoke("winws.exe работает через службу ObhodService.");
+                    OnLog?.Invoke("WinDivert должен загрузиться как драйвер ядра.");
+                }
+                else
+                {
+                    OnLog?.Invoke("");
+                    OnLog?.Invoke(
+                        $"[ОШИБКА] Служба существует, но её статус: {status}");
+
+                    Process[] processes =
+                        Process.GetProcessesByName("winws");
+
+                    if (processes.Length == 0)
+                    {
+                        OnLog?.Invoke(
+                            "winws.exe не найден среди запущенных процессов.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke(
+                    $"[КРИТИЧЕСКАЯ ОШИБКА УСТАНОВКИ СЛУЖБЫ] {ex}");
+            }
         }
 
         public void RemoveService()

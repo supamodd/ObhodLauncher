@@ -14,16 +14,28 @@
 	</ItemGroup>
 
   <!-- Этот блок автоматически скопирует твои файлы obhod-bin и obhod-lists в папку с готовым .exe при компиляции -->
-  <Target Name="CopyZapretFiles" AfterTargets="Build">
-    <ItemGroup>
-      <ZapretBinFiles Include="obhod-bin\**\*.*" />
-      <ZapretListsFiles Include="obhod-lists\**\*.*" />
-		<ZapretStrats Include="strategies\**\*.*" />
-    </ItemGroup>
-	  <Copy SourceFiles="@(ZapretBinFiles)" DestinationFolder="$(OutDir)bin\%(RecursiveDir)" SkipUnchangedFiles="true" />
-	  <Copy SourceFiles="@(ZapretListsFiles)" DestinationFolder="$(OutDir)lists\%(RecursiveDir)" SkipUnchangedFiles="true" />
-	  <Copy SourceFiles="@(ZapretStrats)" DestinationFolder="$(OutDir)strategies\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
+	<Target Name="CopyZapretFiles" AfterTargets="Build">
+		<ItemGroup>
+			<ZapretBinFiles Include="obhod-bin\**\*.*" />
+			<ZapretListsFiles Include="obhod-lists\**\*.*" />
+			<ZapretStrategies Include="strategies\**\*.*" />
+		</ItemGroup>
+
+		<Copy
+		  SourceFiles="@(ZapretBinFiles)"
+		  DestinationFolder="$(OutDir)bin\%(RecursiveDir)"
+		  SkipUnchangedFiles="true" />
+
+		<Copy
+		  SourceFiles="@(ZapretListsFiles)"
+		  DestinationFolder="$(OutDir)lists\%(RecursiveDir)"
+		  SkipUnchangedFiles="true" />
+
+		<Copy
+		  SourceFiles="@(ZapretStrategies)"
+		  DestinationFolder="$(OutDir)strategies\%(RecursiveDir)"
+		  SkipUnchangedFiles="true" />
+	</Target>
   <ItemGroup>
     <None Remove="logo.png" />
     <None Remove="obhod_logo.png" />

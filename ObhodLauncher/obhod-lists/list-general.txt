@@ -16,9 +16,6 @@ cloudflarestorage.com
 cloudflarestream.com
 cloudflaretest.com
 cloudfront.net
-live-video.net
-ttvnw.net
-twitch.tv
 dis.gd
 discord-attachments-uploads-prd.storage.googleapis.com
 discord.app
@@ -50,3 +47,4 @@ betterttv.net
 7tv.io
 localizeapi.com
 klipy.com
+live-video.net

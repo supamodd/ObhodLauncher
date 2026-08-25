@@ -1,1 +1,5 @@
 domain.example.abc
+steam.com
+store.steampowered.com
+api.steampowered.com
+cdn.akamai.streamstatic.com

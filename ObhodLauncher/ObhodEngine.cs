@@ -120,16 +120,24 @@ namespace ZapretWPF
                 _winwsProcess.BeginOutputReadLine();
                 _winwsProcess.BeginErrorReadLine();
 
-                System.Threading.Thread.Sleep(800);
+                System.Threading.Thread.Sleep(1200);
 
                 if (_winwsProcess.HasExited)
                 {
-                    OnLog?.Invoke($"[КРИТИЧЕСКАЯ ОШИБКА] winws.exe мгновенно закрылся. Код: {_winwsProcess.ExitCode}.");
+                    int exitCode = _winwsProcess.ExitCode;
+
+                    OnLog?.Invoke(
+                        $"[ОШИБКА] winws.exe сразу завершился. Код: {exitCode}");
+
+                    OnLog?.Invoke(
+                        "Проверь WinDivert64.sys, WinDivert.dll и выбранную стратегию.");
+
+                    _winwsProcess.Dispose();
                     _winwsProcess = null;
                 }
                 else
                 {
-                    OnLog?.Invoke("=== Обход успешно запущен (Тест) ===");
+                    OnLog?.Invoke("=== winws.exe успешно запущен в тестовом режиме ===");
                 }
             }
             catch (Exception ex)
@@ -326,9 +334,55 @@ namespace ZapretWPF
 
         public void RemoveService()
         {
-            RunAsAdmin("sc.exe", "stop ObhodService");
-            RunAsAdmin("sc.exe", "delete ObhodService");
-            OnLog?.Invoke("=== Фоновая служба удалена ===");
+            try
+            {
+                OnLog?.Invoke("[СЛУЖБА] Остановка ObhodService...");
+
+                RunScCommand(
+                    "stop",
+                    "ObhodService");
+
+                System.Threading.Thread.Sleep(1000);
+
+                OnLog?.Invoke("[СЛУЖБА] Удаление ObhodService...");
+
+                CommandResult deleteResult = RunScCommand(
+                    "delete",
+                    "ObhodService");
+
+                if (deleteResult.ExitCode == 0)
+                {
+                    OnLog?.Invoke("=== Служба ObhodService удалена ===");
+                }
+                else if (!string.IsNullOrWhiteSpace(deleteResult.Output))
+                {
+                    OnLog?.Invoke(deleteResult.Output);
+                }
+
+                // Останавливаем только ручной процесс, если он был запущен кнопкой
+                if (_winwsProcess != null)
+                {
+                    try
+                    {
+                        if (!_winwsProcess.HasExited)
+                        {
+                            _winwsProcess.Kill(true);
+                            _winwsProcess.WaitForExit(3000);
+                        }
+                    }
+                    catch
+                    {
+                        // Процесс уже мог завершиться
+                    }
+
+                    _winwsProcess.Dispose();
+                    _winwsProcess = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"Ошибка удаления службы: {ex.Message}");
+            }
         }
 
         private void CreateDummyListsIfMissing()
@@ -682,6 +736,91 @@ namespace ZapretWPF
             _enableMediaBypass = true;
             OnLog?.Invoke("[✓] Обход Медиа-ресурсов активирован!");
             OnLog?.Invoke("Нажмите 'Применить' на карточке Telegram (это запустит наш параллельный движок).");
+        }
+
+        private sealed class CommandResult
+        {
+            public int ExitCode { get; init; }
+
+            public string Output { get; init; } = string.Empty;
+        }
+
+        private CommandResult RunScCommand(params string[] arguments)
+        {
+            try
+            {
+                using var process = new Process();
+
+                process.StartInfo = new ProcessStartInfo
+                {
+                    FileName = "sc.exe",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory
+                };
+
+                foreach (string argument in arguments)
+                {
+                    process.StartInfo.ArgumentList.Add(argument);
+                }
+
+                process.Start();
+
+                string stdout = process.StandardOutput.ReadToEnd();
+                string stderr = process.StandardError.ReadToEnd();
+
+                process.WaitForExit();
+
+                string output = stdout;
+
+                if (!string.IsNullOrWhiteSpace(stderr))
+                {
+                    output += Environment.NewLine + stderr;
+                }
+
+                output = output.Trim();
+
+                if (!string.IsNullOrWhiteSpace(output))
+                {
+                    OnLog?.Invoke($"[sc.exe] {output}");
+                }
+
+                return new CommandResult
+                {
+                    ExitCode = process.ExitCode,
+                    Output = output
+                };
+            }
+            catch (Exception ex)
+            {
+                string error = $"Ошибка запуска sc.exe: {ex.Message}";
+
+                OnLog?.Invoke(error);
+
+                return new CommandResult
+                {
+                    ExitCode = -1,
+                    Output = error
+                };
+            }
+        }
+
+        private ServiceControllerStatus? GetServiceStatus(string serviceName)
+        {
+            try
+            {
+                using var service = new ServiceController(serviceName);
+
+                service.Refresh();
+
+                return service.Status;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void RunAsAdmin(string fileName, string args)

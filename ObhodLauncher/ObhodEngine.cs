@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.ServiceProcess;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace ZapretWPF
 {
@@ -490,49 +491,155 @@ namespace ZapretWPF
             {
                 string content = File.ReadAllText(batPath);
 
-                // Убираем строки с GameFilter-переменными (они пустые без service.bat)
-                content = System.Text.RegularExpressions.Regex.Replace(content, @".*%GameFilterTCP%.*[\r\n]+", "");
-                content = System.Text.RegularExpressions.Regex.Replace(content, @".*%GameFilterUDP%.*[\r\n]+", "");
+                /*
+                 * ВАЖНО:
+                 * Нельзя удалять всю строку с %GameFilterTCP% или %GameFilterUDP%,
+                 * потому что в этой же строке находятся --wf-tcp и --wf-udp.
+                 *
+                 * Значение 12 используется как отключённый игровой диапазон.
+                 */
+                content = content.Replace("%GameFilterTCP%", "12");
+                content = content.Replace("%GameFilterUDP%", "12");
+                content = content.Replace("%GameFilter%", "12");
 
-                // Убираем переносы строк ^ (с возможными пробелами вокруг, включая конец файла)
-                content = System.Text.RegularExpressions.Regex.Replace(content, @"\s*\^\s*(\r\n|\n|\r|$)", " ");
+                /*
+                 * Убираем командные строки, которые не являются аргументами winws:
+                 * @echo off
+                 * cd
+                 * call service.bat
+                 * set
+                 * start
+                 */
+                var lines = content
+                    .Replace("\r\n", "\n")
+                    .Replace('\r', '\n')
+                    .Split('\n');
 
-                // Находим командную строку winws
-                int winwsIndex = content.IndexOf("winws.exe\"");
-                if (winwsIndex < 0)
+                var argumentLines = new List<string>();
+                bool commandFound = false;
+
+                foreach (string originalLine in lines)
                 {
-                    OnLog?.Invoke("[Ошибка] Не найдена командная строка winws в .bat файле.");
-                    return "";
+                    string line = originalLine.Trim();
+
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    /*
+                     * Ищем строку, где запускается winws.exe.
+                     * Обычно она выглядит так:
+                     *
+                     * start "zapret" /min "%BIN%winws.exe" --wf-tcp=...
+                     */
+                    if (!commandFound)
+                    {
+                        int winwsIndex = line.IndexOf(
+                            "winws.exe",
+                            StringComparison.OrdinalIgnoreCase);
+
+                        if (winwsIndex < 0)
+                        {
+                            continue;
+                        }
+
+                        commandFound = true;
+
+                        int afterExeIndex = line.IndexOf(
+                            '"',
+                            winwsIndex + "winws.exe".Length);
+
+                        if (afterExeIndex >= 0 &&
+                            afterExeIndex + 1 < line.Length)
+                        {
+                            string firstArgs =
+                                line.Substring(afterExeIndex + 1).Trim();
+
+                            if (firstArgs.StartsWith("^"))
+                            {
+                                firstArgs = firstArgs.Substring(1).Trim();
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(firstArgs))
+                            {
+                                argumentLines.Add(firstArgs);
+                            }
+                        }
+
+                        continue;
+                    }
+
+                    /*
+                     * После строки winws.exe идут продолжения команды.
+                     * Убираем символ переноса командной строки ^.
+                     */
+                    if (line.EndsWith("^"))
+                    {
+                        line = line.Substring(0, line.Length - 1).Trim();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        argumentLines.Add(line);
+                    }
                 }
 
-                int startIndex = winwsIndex + "winws.exe\"".Length;
-                int endIndex = content.IndexOf('\n', startIndex);
-                if (endIndex < 0) endIndex = content.Length;
+                if (!commandFound)
+                {
+                    OnLog?.Invoke(
+                        $"[ОШИБКА] В стратегии не найдена команда winws.exe: {batPath}");
 
-                string args = content.Substring(startIndex, endIndex - startIndex).Trim();
+                    return string.Empty;
+                }
 
-                // Заменяем переменные bat-файла на реальные пути
+                string args = string.Join(" ", argumentLines);
+
                 string binPath = Path.Combine(baseDir, "bin") + "\\";
                 string listsPath = Path.Combine(baseDir, "lists") + "\\";
 
+                /*
+                 * Замена переменных BAT на реальные абсолютные пути.
+                 */
                 args = args.Replace("%BIN%", binPath);
                 args = args.Replace("%LISTS%", listsPath);
-                args = args.Replace("%GameFilterTCP%", "");
-                args = args.Replace("%GameFilterUDP%", "");
 
-                // Раскрываем bat-экранирование ^! -> !
+                args = args.Replace("%GameFilterTCP%", "12");
+                args = args.Replace("%GameFilterUDP%", "12");
+                args = args.Replace("%GameFilter%", "12");
+
+                /*
+                 * BAT иногда использует ^! для экранирования символа !.
+                 */
                 args = args.Replace("^!", "!");
 
-                // Убираем лишние пробелы
+                /*
+                 * Убираем оставшиеся символы переноса команд.
+                 */
+                args = args.Replace("^", " ");
+
                 while (args.Contains("  "))
+                {
                     args = args.Replace("  ", " ");
+                }
+
+                args = args.Trim();
+
+                /*
+                 * Выводим итоговые аргументы в лог.
+                 * По ним можно проверить, что --wf-tcp и --wf-udp действительно есть.
+                 */
+                OnLog?.Invoke("[ПАРСЕР] Итоговые аргументы стратегии:");
+                OnLog?.Invoke(args);
 
                 return args;
             }
             catch (Exception ex)
             {
-                OnLog?.Invoke($"[Ошибка] Не удалось распарсить стратегию: {ex.Message}");
-                return "";
+                OnLog?.Invoke(
+                    $"[ОШИБКА] Не удалось разобрать стратегию: {ex.Message}");
+
+                return string.Empty;
             }
         }
 

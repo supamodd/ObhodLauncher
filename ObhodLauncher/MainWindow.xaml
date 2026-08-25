@@ -8,7 +8,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="CanMinimize">
-
+ 
     <Window.Resources>
         <!-- Полупрозрачные цвета для эффекта стекла -->
         <SolidColorBrush x:Key="GlassBg" Color="#9918181b"/>

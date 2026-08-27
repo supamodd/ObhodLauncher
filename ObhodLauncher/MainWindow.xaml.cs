@@ -185,18 +185,43 @@ namespace ZapretWPF
             }
         }
 
-        private void BtnTelegramBypass_Click(object sender, RoutedEventArgs e)
+        private void BtnTelegramBypass_Click(
+    object sender,
+    RoutedEventArgs e)
         {
-            bool telegram = chkTelegram.IsChecked ?? false;
+            bool telegram =
+                chkTelegram.IsChecked ?? false;
 
-            if (telegram)
-            {
-                _engine.InstallService(false, false, true, 0);
-            }
-            else
+            if (!telegram)
             {
                 _engine.RemoveService();
+
+                txtInstalledStrategy.Text =
+                    "Обход Telegram отключён";
+
+                return;
             }
+
+            /*
+             * Запускаем Telegram вместе с теми ресурсами,
+             * которые выбраны на первой вкладке.
+             */
+            bool discord =
+                chkDiscord.IsChecked ?? false;
+
+            bool youtube =
+                chkYouTube.IsChecked ?? false;
+
+            int strategy =
+                cmbStrategy.SelectedIndex;
+
+            _engine.InstallService(
+                discord,
+                youtube,
+                true,
+                strategy);
+
+            UpdateInstalledStrategyInfo();
         }
 
         private void Header_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

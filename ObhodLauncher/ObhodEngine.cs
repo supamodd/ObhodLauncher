@@ -438,14 +438,19 @@ namespace ZapretWPF
             }
         }
 
-        private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
+        private string GetArguments(
+    bool discord,
+    bool youtube,
+    bool telegram,
+    int strategyIndex,
+    bool forService)
         {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string baseDir =
+                AppDomain.CurrentDomain.BaseDirectory;
 
             /*
-             * Если включён только Telegram,
-             * используем отдельную Telegram-стратегию,
-             * а не general.bat.
+             * Если выбраны только Telegram,
+             * используем отдельную Telegram-стратегию.
              */
             if (telegram && !discord && !youtube)
             {
@@ -453,20 +458,56 @@ namespace ZapretWPF
 
                 return BuildTelegramArguments(baseDir);
             }
-            string strategiesDir = Path.Combine(baseDir, "strategies");
-            string strategyFile = GetStrategyFileName(strategyIndex);
-            string strategyPath = Path.Combine(strategiesDir, strategyFile);
+
+            string strategiesDir =
+                Path.Combine(baseDir, "strategies");
+
+            string strategyFile =
+                GetStrategyFileName(strategyIndex);
+
+            string strategyPath =
+                Path.Combine(strategiesDir, strategyFile);
+
+            string args;
 
             if (File.Exists(strategyPath))
             {
-                OnLog?.Invoke($"[Стратегия] {strategyFile}");
-                string args = BuildArgsFromStrategyFile(strategyPath, baseDir);
-                if (!string.IsNullOrWhiteSpace(args))
-                    return args;
+                OnLog?.Invoke(
+                    $"[Стратегия] {strategyFile}");
+
+                args =
+                    BuildArgsFromStrategyFile(
+                        strategyPath,
+                        baseDir);
+            }
+            else
+            {
+                OnLog?.Invoke(
+                    $"[ПРЕДУПРЕЖДЕНИЕ] Файл стратегии не найден: {strategyPath}");
+
+                args =
+                    BuildDefaultArguments(baseDir);
             }
 
-            OnLog?.Invoke($"[Предупреждение] Файл стратегии не найден: {strategyPath}. Используется базовая стратегия.");
-            return BuildDefaultArguments(baseDir);
+            if (string.IsNullOrWhiteSpace(args))
+            {
+                return string.Empty;
+            }
+
+            /*
+             * Если Telegram включён вместе с Discord или YouTube,
+             * добавляем Telegram-фильтры к выбранной стратегии.
+             */
+            if (telegram)
+            {
+                OnLog?.Invoke(
+                    "[Telegram] Добавляю Telegram к выбранной стратегии");
+
+                args += " " +
+                        BuildTelegramRules(baseDir);
+            }
+
+            return args;
         }
 
         private string GetStrategyFileName(int strategyIndex)
@@ -656,8 +697,11 @@ namespace ZapretWPF
 
         private string BuildTelegramArguments(string baseDir)
         {
-            string binPath = Path.Combine(baseDir, "bin") + "\\";
-            string listsPath = Path.Combine(baseDir, "lists") + "\\";
+            string binPath =
+                Path.Combine(baseDir, "bin") + "\\";
+
+            string listsPath =
+                Path.Combine(baseDir, "lists") + "\\";
 
             string telegramIpSet =
                 $"\"{listsPath}ipset-telegram.txt\"";
@@ -669,12 +713,49 @@ namespace ZapretWPF
                 $"\"{binPath}tls_clienthello_max_ru.bin\"";
 
             string args =
-                $"--wf-tcp=80,443 " +
-                $"--wf-udp=443 " +
+                "--wf-tcp=80,443 " +
+                "--wf-udp=443 " +
+                BuildTelegramRules(baseDir);
 
+            OnLog?.Invoke(
+                "[Telegram] Используется отдельная Telegram-стратегия");
+
+            OnLog?.Invoke(
+                $"[Telegram] IP-список: {telegramIpSet}");
+
+            OnLog?.Invoke(
+                $"[Telegram] Аргументы: {args}");
+
+            return args;
+        }
+
+        private string BuildTelegramRules(string baseDir)
+        {
+            string binPath =
+                Path.Combine(baseDir, "bin") + "\\";
+
+            string listsPath =
+                Path.Combine(baseDir, "lists") + "\\";
+
+            string telegramIpSet =
+                $"\"{listsPath}ipset-telegram.txt\"";
+
+            string fakeQuic =
+                $"\"{binPath}quic_initial_dbankcloud_ru.bin\"";
+
+            string fakeTls =
+                $"\"{binPath}tls_clienthello_max_ru.bin\"";
+
+            /*
+             * ВАЖНО:
+             * Здесь нет --wf-tcp и --wf-udp.
+             * Они уже есть в основной стратегии.
+             * Поэтому эти правила можно безопасно добавлять
+             * к Discord и YouTube.
+             */
+            return
                 /*
-                 * TCP Telegram.
-                 * Обрабатываем только IP-адреса Telegram.
+                 * Telegram TCP
                  */
                 $"--filter-tcp=80,443 " +
                 $"--ipset={telegramIpSet} " +
@@ -685,22 +766,16 @@ namespace ZapretWPF
                 $"--dpi-desync-split-seqovl=664 " +
                 $"--dpi-desync-split-seqovl-pattern={fakeTls} " +
                 $"--dpi-desync-fake-tls={fakeTls} " +
-                $"--new " +
+                "--new " +
 
                 /*
-                 * UDP Telegram / QUIC.
+                 * Telegram UDP / QUIC
                  */
                 $"--filter-udp=443 " +
                 $"--ipset={telegramIpSet} " +
                 $"--dpi-desync=fake " +
                 $"--dpi-desync-repeats=10 " +
                 $"--dpi-desync-fake-quic={fakeQuic}";
-
-            OnLog?.Invoke("[Telegram] Используется ipset-telegram.txt");
-            OnLog?.Invoke("[Telegram] Аргументы:");
-            OnLog?.Invoke(args);
-
-            return args;
         }
 
         private string BuildDefaultArguments(string baseDir)

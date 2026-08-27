@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.ServiceProcess;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Win32;
 
 namespace ZapretWPF
 {
@@ -158,11 +159,7 @@ namespace ZapretWPF
             }
         }
 
-        public void InstallService(
-    bool enableDiscord,
-    bool enableYouTube,
-    bool enableTelegram,
-    int strategyIndex)
+        public void InstallService( bool enableDiscord, bool enableYouTube, bool enableTelegram, int strategyIndex)
         {
             try
             {
@@ -269,6 +266,8 @@ namespace ZapretWPF
 
                     return;
                 }
+
+                SaveInstalledStrategy(strategyIndex, enableTelegram, enableDiscord, enableYouTube);
 
                 RunScCommand(
                     "description",
@@ -442,6 +441,18 @@ namespace ZapretWPF
         private string GetArguments(bool discord, bool youtube, bool telegram, int strategyIndex, bool forService)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+            /*
+             * Если включён только Telegram,
+             * используем отдельную Telegram-стратегию,
+             * а не general.bat.
+             */
+            if (telegram && !discord && !youtube)
+            {
+                OnLog?.Invoke("[Стратегия] Telegram");
+
+                return BuildTelegramArguments(baseDir);
+            }
             string strategiesDir = Path.Combine(baseDir, "strategies");
             string strategyFile = GetStrategyFileName(strategyIndex);
             string strategyPath = Path.Combine(strategiesDir, strategyFile);
@@ -641,6 +652,55 @@ namespace ZapretWPF
 
                 return string.Empty;
             }
+        }
+
+        private string BuildTelegramArguments(string baseDir)
+        {
+            string binPath = Path.Combine(baseDir, "bin") + "\\";
+            string listsPath = Path.Combine(baseDir, "lists") + "\\";
+
+            string telegramIpSet =
+                $"\"{listsPath}ipset-telegram.txt\"";
+
+            string fakeQuic =
+                $"\"{binPath}quic_initial_dbankcloud_ru.bin\"";
+
+            string fakeTls =
+                $"\"{binPath}tls_clienthello_max_ru.bin\"";
+
+            string args =
+                $"--wf-tcp=80,443 " +
+                $"--wf-udp=443 " +
+
+                /*
+                 * TCP Telegram.
+                 * Обрабатываем только IP-адреса Telegram.
+                 */
+                $"--filter-tcp=80,443 " +
+                $"--ipset={telegramIpSet} " +
+                $"--dpi-desync=fake,multisplit " +
+                $"--dpi-desync-repeats=8 " +
+                $"--dpi-desync-fooling=ts " +
+                $"--dpi-desync-split-pos=1 " +
+                $"--dpi-desync-split-seqovl=664 " +
+                $"--dpi-desync-split-seqovl-pattern={fakeTls} " +
+                $"--dpi-desync-fake-tls={fakeTls} " +
+                $"--new " +
+
+                /*
+                 * UDP Telegram / QUIC.
+                 */
+                $"--filter-udp=443 " +
+                $"--ipset={telegramIpSet} " +
+                $"--dpi-desync=fake " +
+                $"--dpi-desync-repeats=10 " +
+                $"--dpi-desync-fake-quic={fakeQuic}";
+
+            OnLog?.Invoke("[Telegram] Используется ipset-telegram.txt");
+            OnLog?.Invoke("[Telegram] Аргументы:");
+            OnLog?.Invoke(args);
+
+            return args;
         }
 
         private string BuildDefaultArguments(string baseDir)
@@ -941,6 +1001,84 @@ namespace ZapretWPF
                 WindowStyle = ProcessWindowStyle.Hidden
             });
             process?.WaitForExit();
+        }
+
+        private void SaveInstalledStrategy(int strategyIndex, bool telegram, bool discord, bool youtube)
+        {
+            try
+            {
+                using RegistryKey? key =
+                    Registry.LocalMachine.CreateSubKey(
+                        @"SYSTEM\CurrentControlSet\Services\ObhodService");
+
+                if (key == null)
+                {
+                    OnLog?.Invoke(
+                        "[ПРЕДУПРЕЖДЕНИЕ] Не удалось сохранить название стратегии.");
+                    return;
+                }
+
+                string strategyName;
+
+                if (telegram && !discord && !youtube)
+                {
+                    strategyName = "Telegram";
+                }
+                else
+                {
+                    strategyName = GetStrategyFileName(strategyIndex);
+                }
+
+                key.SetValue(
+                    "ObhodStrategy",
+                    strategyName,
+                    RegistryValueKind.String);
+
+                key.SetValue(
+                    "ObhodInstallTime",
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    RegistryValueKind.String);
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke(
+                    $"[ПРЕДУПРЕЖДЕНИЕ] Не удалось записать стратегию: {ex.Message}");
+            }
+        }
+
+        public string GetInstalledStrategyInfo()
+        {
+            try
+            {
+                using var service =
+                    new ServiceController("ObhodService");
+
+                service.Refresh();
+
+                using RegistryKey? key =
+                    Registry.LocalMachine.OpenSubKey(
+                        @"SYSTEM\CurrentControlSet\Services\ObhodService");
+
+                string? strategy =
+                    key?.GetValue("ObhodStrategy")?.ToString();
+
+                string status = service.Status.ToString();
+
+                if (string.IsNullOrWhiteSpace(strategy))
+                {
+                    return $"Служба установлена, статус: {status}";
+                }
+
+                return $"Установлена: {strategy} | Статус: {status}";
+            }
+            catch (InvalidOperationException)
+            {
+                return "Служба обхода не установлена";
+            }
+            catch (Exception ex)
+            {
+                return $"Не удалось определить стратегию: {ex.Message}";
+            }
         }
     }
 }

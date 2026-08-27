@@ -53,6 +53,7 @@ namespace ZapretWPF
         {
             LoadSettings();
             KvnUpdateCoreInfo();
+            UpdateInstalledStrategyInfo();
         }
 
         private void SaveSettings()
@@ -399,6 +400,45 @@ namespace ZapretWPF
             if (_kvnVpnEngine.IsConnected)
             {
                 _kvnVpnEngine.Disconnect();
+            }
+        }
+
+        private void UpdateInstalledStrategyInfo()
+        {
+            try
+            {
+                string info = _engine.GetInstalledStrategyInfo();
+
+                txtInstalledStrategy.Text = info;
+
+                if (info.Contains("не установлена",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    txtInstalledStrategy.Foreground =
+                        new System.Windows.Media.BrushConverter()
+                            .ConvertFromString("#a1a1aa")
+                            as System.Windows.Media.Brush;
+                }
+                else if (info.Contains("Running",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    txtInstalledStrategy.Foreground =
+                        new System.Windows.Media.BrushConverter()
+                            .ConvertFromString("#4ade80")
+                            as System.Windows.Media.Brush;
+                }
+                else
+                {
+                    txtInstalledStrategy.Foreground =
+                        new System.Windows.Media.BrushConverter()
+                            .ConvertFromString("#facc15")
+                            as System.Windows.Media.Brush;
+                }
+            }
+            catch (Exception ex)
+            {
+                txtInstalledStrategy.Text =
+                    $"Ошибка проверки стратегии: {ex.Message}";
             }
         }
     }

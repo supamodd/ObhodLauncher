@@ -471,7 +471,7 @@
                                                     Foreground="#a1a1aa"
                                                     FontSize="12"
                                                     TextWrapping="Wrap"
-                                                    Margin="0,8,0,0"/>
+                                                    Margin="0,8,0,0" Height="18"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

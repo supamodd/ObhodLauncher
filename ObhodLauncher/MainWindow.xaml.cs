@@ -496,7 +496,7 @@ namespace ZapretWPF
         {
             if (lstKvnServers.SelectedItem is KvnServerConfig cfg)
             {
-                Clipboard.SetText(cfg.RawLink);
+                System.Windows.Clipboard.SetText(cfg.RawLink);
                 txtKvnConnectionStatus.Text = $"📋 Скопирован: {cfg.Remark}";
             }
             else
@@ -514,7 +514,7 @@ namespace ZapretWPF
             }
 
             string all = string.Join(Environment.NewLine, _kvnServers.Select(s => s.RawLink));
-            Clipboard.SetText(all);
+            System.Windows.Clipboard.SetText(all);
             txtKvnConnectionStatus.Text = $"📄 Скопировано {_kvnServers.Count} конфигов";
         }
 

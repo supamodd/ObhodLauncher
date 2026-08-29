@@ -1,7 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Windows;
-using System.ComponentModel;
+using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 
 namespace ZapretWPF
@@ -10,6 +13,11 @@ namespace ZapretWPF
     {
         private Forms.NotifyIcon? _trayIcon;
         private bool _allowRealClose = false;
+
+        private Icon? _trayOnIcon;
+        private Icon? _trayOffIcon;
+        private DispatcherTimer? _trayStatusTimer;
+
         private ZapretEngine _engine;
         private KvnEngine _kvnEngine;
         private KvnVpnEngine _kvnVpnEngine;
@@ -67,25 +75,62 @@ namespace ZapretWPF
 
         private void InitializeTrayIcon()
         {
+            string baseDirectory =
+                AppDomain.CurrentDomain.BaseDirectory;
+
+            string trayOnPath =
+                System.IO.Path.Combine(
+                    baseDirectory,
+                    "ObhodIconTrayOn.ico");
+
+            string trayOffPath =
+                System.IO.Path.Combine(
+                    baseDirectory,
+                    "ObhodIconTrayOff.ico");
+
+            /*
+             * Загружаем иконки из папки рядом с exe.
+             */
+            if (System.IO.File.Exists(trayOnPath))
+            {
+                _trayOnIcon = new Icon(trayOnPath);
+            }
+
+            if (System.IO.File.Exists(trayOffPath))
+            {
+                _trayOffIcon = new Icon(trayOffPath);
+            }
+
+            /*
+             * Если иконки не найдены, используем стандартную,
+             * чтобы приложение всё равно запустилось.
+             */
+            Icon defaultIcon =
+                _trayOffIcon ??
+                SystemIcons.Application;
+
             _trayIcon = new Forms.NotifyIcon
             {
-                Icon = System.Drawing.SystemIcons.Application,
+                Icon = defaultIcon,
                 Text = "ObhodLauncher",
-                Visible = true
+                Visible = false
             };
 
-            var trayMenu = new Forms.ContextMenuStrip();
+            var trayMenu =
+                new Forms.ContextMenuStrip();
 
-            var showItem = new Forms.ToolStripMenuItem(
-                "Открыть ObhodLauncher");
+            var showItem =
+                new Forms.ToolStripMenuItem(
+                    "Открыть ObhodLauncher");
 
             showItem.Click += (sender, e) =>
             {
                 ShowFromTray();
             };
 
-            var exitItem = new Forms.ToolStripMenuItem(
-                "Закрыть полностью");
+            var exitItem =
+                new Forms.ToolStripMenuItem(
+                    "Закрыть полностью");
 
             exitItem.Click += (sender, e) =>
             {
@@ -109,8 +154,85 @@ namespace ZapretWPF
             {
                 ShowFromTray();
             };
+
+            /*
+             * Проверяем состояние winws.exe раз в секунду.
+             */
+            _trayStatusTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+
+            _trayStatusTimer.Tick += (sender, e) =>
+            {
+                UpdateTrayIcon();
+            };
+
+            _trayStatusTimer.Start();
+
+            UpdateTrayIcon();
         }
 
+        private bool IsWinwsRunning()
+        {
+            try
+            {
+                Process[] processes =
+                    Process.GetProcessesByName("winws");
+
+                foreach (Process process in processes)
+                {
+                    try
+                    {
+                        if (!process.HasExited)
+                        {
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                        // Процесс мог завершиться во время проверки
+                    }
+                }
+            }
+            catch
+            {
+                // Не удалось проверить список процессов
+            }
+
+            return false;
+        }
+        private void UpdateTrayIcon()
+        {
+            if (_trayIcon == null)
+            {
+                return;
+            }
+
+            bool winwsRunning =
+                IsWinwsRunning();
+
+            if (winwsRunning)
+            {
+                if (_trayOnIcon != null)
+                {
+                    _trayIcon.Icon = _trayOnIcon;
+                }
+
+                _trayIcon.Text =
+                    "ObhodLauncher — обход работает";
+            }
+            else
+            {
+                if (_trayOffIcon != null)
+                {
+                    _trayIcon.Icon = _trayOffIcon;
+                }
+
+                _trayIcon.Text =
+                    "ObhodLauncher — обход выключен";
+            }
+        }
         private void HideToTray()
         {
             Hide();
@@ -285,8 +407,21 @@ namespace ZapretWPF
 
         protected override void OnClosed(EventArgs e)
         {
-            _trayIcon?.Dispose();
-            _trayIcon = null;
+            _trayStatusTimer?.Stop();
+            _trayStatusTimer = null;
+
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+
+            _trayOnIcon?.Dispose();
+            _trayOnIcon = null;
+
+            _trayOffIcon?.Dispose();
+            _trayOffIcon = null;
 
             _engine.Stop();
             KvnDisconnectOnClose();

@@ -8,6 +8,7 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>ObhodIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -20,6 +21,15 @@
 			<ZapretBinFiles Include="obhod-bin\**\*.*" />
 			<ZapretListsFiles Include="obhod-lists\**\*.*" />
 			<ZapretStrategies Include="strategies\**\*.*" />
+		</ItemGroup>
+		<ItemGroup>
+			<Resource Include="ObhodIcon.ico" />
+			<None Include="ObhodIconTrayOn.ico">
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			</None>
+			<None Include="ObhodIconTrayOff.ico">
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			</None>
 		</ItemGroup>
 
 		<Copy

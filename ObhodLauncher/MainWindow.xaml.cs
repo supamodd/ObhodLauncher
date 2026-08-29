@@ -26,12 +26,16 @@ namespace ZapretWPF
             this.Closing += MainWindow_Closing;
 
             _engine = new ZapretEngine();
+            _kvnEngine = new KvnEngine();
+            _kvnVpnEngine = new KvnVpnEngine();
 
             _engine.OnLog = (message) =>
             {
                 Dispatcher.Invoke(() =>
                 {
-                    txtLogs.AppendText(message + Environment.NewLine);
+                    txtLogs.AppendText(
+                        message + Environment.NewLine);
+
                     txtLogs.ScrollToEnd();
                 });
             };
@@ -40,7 +44,9 @@ namespace ZapretWPF
             {
                 Dispatcher.Invoke(() =>
                 {
-                    txtLogs.AppendText(message + Environment.NewLine);
+                    txtLogs.AppendText(
+                        message + Environment.NewLine);
+
                     txtLogs.ScrollToEnd();
                 });
             };
@@ -49,7 +55,9 @@ namespace ZapretWPF
             {
                 Dispatcher.Invoke(() =>
                 {
-                    txtLogs.AppendText(message + Environment.NewLine);
+                    txtLogs.AppendText(
+                        message + Environment.NewLine);
+
                     txtLogs.ScrollToEnd();
                 });
             };

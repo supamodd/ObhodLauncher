@@ -90,7 +90,12 @@ namespace ZapretWPF
             exitItem.Click += (sender, e) =>
             {
                 _allowRealClose = true;
-                _trayIcon!.Visible = false;
+
+                if (_trayIcon != null)
+                {
+                    _trayIcon.Visible = false;
+                }
+
                 Close();
             };
 
@@ -126,46 +131,51 @@ namespace ZapretWPF
     object? sender,
     CancelEventArgs e)
         {
+            /*
+             * Если закрытие было вызвано пунктом
+             * «Закрыть полностью» в меню трея,
+             * окно выбора не показываем.
+             */
             if (_allowRealClose)
             {
                 return;
             }
 
-            var result = System.Windows.MessageBox.Show(
-                "Что сделать с ObhodLauncher?",
-                "Выход из программы",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question);
+            /*
+             * Отменяем первоначальное закрытие,
+             * показываем собственное окно выбора.
+             */
+            e.Cancel = true;
 
-            if (result == MessageBoxResult.Yes)
+            var dialog = new CloseChoiceWindow
+            {
+                Owner = this
+            };
+
+            bool? result = dialog.ShowDialog();
+
+            if (result == true)
             {
                 /*
-                 * Кнопка «Да» означает:
-                 * оставить программу работать в трее.
+                 * Кнопка «Да»:
+                 * полностью закрываем программу.
                  */
-                e.Cancel = true;
-                HideToTray();
-            }
-            else if (result == MessageBoxResult.No)
-            {
-                /*
-                 * Кнопка «Нет» означает:
-                 * закрыть программу полностью.
-                 */
-                e.Cancel = false;
                 _allowRealClose = true;
 
                 if (_trayIcon != null)
                 {
                     _trayIcon.Visible = false;
                 }
+
+                Close();
             }
             else
             {
                 /*
-                 * Отмена закрытия.
+                 * Кнопка «Оставить в трее»:
+                 * окно скрывается, а приложение продолжает работу.
                  */
-                e.Cancel = true;
+                HideToTray();
             }
         }
 
@@ -317,9 +327,7 @@ namespace ZapretWPF
             }
         }
 
-        private void BtnTelegramBypass_Click(
-    object sender,
-    RoutedEventArgs e)
+        private void BtnTelegramBypass_Click(object sender, RoutedEventArgs e)
         {
             bool telegram =
                 chkTelegram.IsChecked ?? false;
@@ -382,13 +390,11 @@ namespace ZapretWPF
             WindowState = WindowState.Minimized;
         }
 
-        private void BtnClose_Click( object sender, RoutedEventArgs e)
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
             /*
-             * Не останавливаем обход здесь.
-             * Сначала будет вызвано MainWindow_Closing,
-             * где пользователь выберет:
-             * оставить программу в трее или закрыть полностью.
+             * Не вызываем _engine.Stop().
+             * Сначала показывается окно выбора.
              */
             Close();
         }

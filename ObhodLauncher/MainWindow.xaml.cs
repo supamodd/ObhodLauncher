@@ -1,23 +1,31 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
+using System.ComponentModel;
+using Forms = System.Windows.Forms;
 
 namespace ZapretWPF
 {
     public partial class MainWindow : Window
     {
+        private Forms.NotifyIcon? _trayIcon;
+        private bool _allowRealClose = false;
         private ZapretEngine _engine;
         private KvnEngine _kvnEngine;
         private KvnVpnEngine _kvnVpnEngine;
         private System.Collections.Generic.List<KvnServerConfig> _kvnServers = new();
         private string _kvnRawSubscription = "";
 
+
         public MainWindow()
         {
             InitializeComponent();
+
+            InitializeTrayIcon();
+
+            this.Closing += MainWindow_Closing;
+
             _engine = new ZapretEngine();
-            _kvnEngine = new KvnEngine();
-            _kvnVpnEngine = new KvnVpnEngine();
 
             _engine.OnLog = (message) =>
             {
@@ -47,6 +55,118 @@ namespace ZapretWPF
             };
 
             this.Loaded += MainWindow_Loaded;
+        }
+
+        private void InitializeTrayIcon()
+        {
+            _trayIcon = new Forms.NotifyIcon
+            {
+                Icon = System.Drawing.SystemIcons.Application,
+                Text = "ObhodLauncher",
+                Visible = true
+            };
+
+            var trayMenu = new Forms.ContextMenuStrip();
+
+            var showItem = new Forms.ToolStripMenuItem(
+                "Открыть ObhodLauncher");
+
+            showItem.Click += (sender, e) =>
+            {
+                ShowFromTray();
+            };
+
+            var exitItem = new Forms.ToolStripMenuItem(
+                "Закрыть полностью");
+
+            exitItem.Click += (sender, e) =>
+            {
+                _allowRealClose = true;
+                _trayIcon!.Visible = false;
+                Close();
+            };
+
+            trayMenu.Items.Add(showItem);
+            trayMenu.Items.Add(new Forms.ToolStripSeparator());
+            trayMenu.Items.Add(exitItem);
+
+            _trayIcon.ContextMenuStrip = trayMenu;
+
+            _trayIcon.DoubleClick += (sender, e) =>
+            {
+                ShowFromTray();
+            };
+        }
+
+        private void HideToTray()
+        {
+            Hide();
+            ShowInTaskbar = false;
+
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = true;
+                _trayIcon.ShowBalloonTip(
+                    1500,
+                    "ObhodLauncher",
+                    "Программа продолжает работать в трее.",
+                    Forms.ToolTipIcon.Info);
+            }
+        }
+
+        private void MainWindow_Closing(
+    object? sender,
+    CancelEventArgs e)
+        {
+            if (_allowRealClose)
+            {
+                return;
+            }
+
+            var result = System.Windows.MessageBox.Show(
+                "Что сделать с ObhodLauncher?",
+                "Выход из программы",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                /*
+                 * Кнопка «Да» означает:
+                 * оставить программу работать в трее.
+                 */
+                e.Cancel = true;
+                HideToTray();
+            }
+            else if (result == MessageBoxResult.No)
+            {
+                /*
+                 * Кнопка «Нет» означает:
+                 * закрыть программу полностью.
+                 */
+                e.Cancel = false;
+                _allowRealClose = true;
+
+                if (_trayIcon != null)
+                {
+                    _trayIcon.Visible = false;
+                }
+            }
+            else
+            {
+                /*
+                 * Отмена закрытия.
+                 */
+                e.Cancel = true;
+            }
+        }
+
+        private void ShowFromTray()
+        {
+            Show();
+            ShowInTaskbar = true;
+            WindowState = WindowState.Normal;
+            Activate();
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -147,8 +267,12 @@ namespace ZapretWPF
 
         protected override void OnClosed(EventArgs e)
         {
+            _trayIcon?.Dispose();
+            _trayIcon = null;
+
             _engine.Stop();
             KvnDisconnectOnClose();
+
             base.OnClosed(e);
         }
 
@@ -250,9 +374,14 @@ namespace ZapretWPF
             WindowState = WindowState.Minimized;
         }
 
-        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        private void BtnClose_Click( object sender, RoutedEventArgs e)
         {
-            _engine.Stop();
+            /*
+             * Не останавливаем обход здесь.
+             * Сначала будет вызвано MainWindow_Closing,
+             * где пользователь выберет:
+             * оставить программу в трее или закрыть полностью.
+             */
             Close();
         }
 

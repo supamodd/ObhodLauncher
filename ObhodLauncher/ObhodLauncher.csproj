@@ -22,15 +22,6 @@
 			<ZapretListsFiles Include="obhod-lists\**\*.*" />
 			<ZapretStrategies Include="strategies\**\*.*" />
 		</ItemGroup>
-		<ItemGroup>
-			<Resource Include="ObhodIcon.ico" />
-			<None Include="ObhodIconTrayOn.ico">
-				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			</None>
-			<None Include="ObhodIconTrayOff.ico">
-				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			</None>
-		</ItemGroup>
 
 		<Copy
 		  SourceFiles="@(ZapretBinFiles)"
@@ -47,16 +38,25 @@
 		  DestinationFolder="$(OutDir)strategies\%(RecursiveDir)"
 		  SkipUnchangedFiles="true" />
 	</Target>
-  <ItemGroup>
-    <None Remove="logo.png" />
-    <None Remove="obhod_logo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="logo.png" />
-    <Resource Include="obhod_logo.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="vpn-core\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Include="ObhodIcon.ico" />
+		<None Include="ObhodIconTrayOn.ico">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="ObhodIconTrayOff.ico">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="logo.png" />
+		<None Remove="obhod_logo.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="logo.png" />
+		<Resource Include="obhod_logo.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="vpn-core\" />
+	</ItemGroup>
 
 </Project>

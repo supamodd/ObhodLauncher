@@ -389,38 +389,64 @@
             <Grid>
                 <!-- КАСТОМНАЯ ШАПКА ОКНА (С перетаскиванием мыши) -->
                 <!-- Верхняя шапка -->
-                <Border Height="70" VerticalAlignment="Top" Background="#80000000" BorderBrush="{StaticResource GlassBorder}" BorderThickness="0,0,0,1" 
-                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
-                    <Grid>
-                        <!-- Логотип (Картинка) -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="25,0,0,0" IsHitTestVisible="False">
-                            <!-- Наша картинка логотипа -->
+                <Border Height="70"
+        VerticalAlignment="Top"
+        Background="#80000000"
+        BorderBrush="{StaticResource GlassBorder}"
+        BorderThickness="0,0,0,1"
+        MouseLeftButtonDown="Header_MouseLeftButtonDown">
 
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
-                            <Image Source="pack://application:,,,/ObhodLauncher;component/obhod_logo.png"
-                                    Width="220"
-                                    Height="52"
-                                    Stretch="Uniform"
-                                    RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <Border Background="#26ffffff" CornerRadius="6" Padding="6,2" Width="47" Height="20">
-                                <TextBlock Text="v1.0.2" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentColor}" RenderTransformOrigin="-1.704,0.789"/>
-                            </Border>
+                    <Canvas>
 
-                            <!-- Плашка с версией (оставим её для стиля, она смотрится круто рядом с лого) -->
+                        <!-- Логотип -->
+                        <Image
+            Source="pack://application:,,,/ObhodLauncher;component/obhod_logo.png"
+            Width="220"
+            Height="52"
+            Stretch="Uniform"
+            Canvas.Left="25"
+            Canvas.Top="9"
+            RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <!-- Версия -->
+                        <Border
+            Background="#26FFFFFF"
+            BorderBrush="#44FFFFFF"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="6,2"
+            Width="49"
+            Height="20" HorizontalAlignment="Left" VerticalAlignment="Top">
+
+                            <TextBlock
+                Text="v1.0.2"
+                FontSize="13"
+                FontWeight="Bold"
+                Foreground="{StaticResource AccentColor}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center" RenderTransformOrigin="-1.043,1.362" Margin="0,0,-1,0"/>
+                        </Border>
+
+                        <!-- Кнопки окна -->
+                        <StackPanel
+            Orientation="Horizontal"
+            HorizontalAlignment="Right"
+            Canvas.Right="15"
+            Canvas.Top="15">
+
+                            <Button
+                Content="—"
+                Style="{StaticResource TitleBarButton}"
+                Margin="0,0,5,0"
+                Click="BtnMinimize_Click"/>
+
+                            <Button
+                Content="✕"
+                Style="{StaticResource TitleBarCloseButton}"
+                Click="BtnClose_Click"/>
                         </StackPanel>
 
-                        <!-- Кнопки управления окном -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,15,0">
-                            <!-- Свернуть -->
-                            <Button Content="—" Style="{StaticResource TitleBarButton}" Margin="0,0,5,0" Click="BtnMinimize_Click"/>
-                            <!-- Закрыть -->
-                            <Button Content="✕" Style="{StaticResource TitleBarCloseButton}" Click="BtnClose_Click"/>
-                        </StackPanel>
-                    </Grid>
+                    </Canvas>
                 </Border>
 
                 <!-- Основной TabControl -->

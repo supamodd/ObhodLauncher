@@ -706,12 +706,6 @@ namespace ZapretWPF
             string telegramIpSet =
                 $"\"{listsPath}ipset-telegram.txt\"";
 
-            string fakeQuic =
-                $"\"{binPath}quic_initial_dbankcloud_ru.bin\"";
-
-            string fakeTls =
-                $"\"{binPath}tls_clienthello_max_ru.bin\"";
-
             string args =
                 "--wf-tcp=80,443 " +
                 "--wf-udp=443 " +
@@ -737,11 +731,29 @@ namespace ZapretWPF
             string listsPath =
                 Path.Combine(baseDir, "lists") + "\\";
 
-            string telegramDomains = 
-                $"\"{listsPath}list-telegram.txt\"";
-
             string telegramIpSet =
                 $"\"{listsPath}ipset-telegram.txt\"";
+
+            string telegramDomains =
+                $"\"{listsPath}list-telegram.txt\"";
+
+            string ipSetPath =
+                Path.Combine(listsPath, "ipset-telegram.txt");
+
+            string domainsPath =
+                Path.Combine(listsPath, "list-telegram.txt");
+
+            if (!File.Exists(ipSetPath))
+            {
+                OnLog?.Invoke(
+                    $"[Telegram][ОШИБКА] Не найден: {ipSetPath}");
+            }
+
+            if (!File.Exists(domainsPath))
+            {
+                OnLog?.Invoke(
+                    $"[Telegram][ОШИБКА] Не найден: {domainsPath}");
+            }
 
             string fakeQuic =
                 $"\"{binPath}quic_initial_dbankcloud_ru.bin\"";
@@ -750,18 +762,16 @@ namespace ZapretWPF
                 $"\"{binPath}tls_clienthello_max_ru.bin\"";
 
             /*
-             * ВАЖНО:
-             * Здесь нет --wf-tcp и --wf-udp.
-             * Они уже есть в основной стратегии.
-             * Поэтому эти правила можно безопасно добавлять
-             * к Discord и YouTube.
+             * Важно:
+             * ipset и hostlist находятся в отдельных секциях.
+             * Они не должны быть объединены в одном фильтре.
              */
             return
                 /*
-                 * Telegram TCP
+                 * Web Telegram.
+                 * Используется только список доменов.
                  */
                 $"--filter-tcp=80,443 " +
-                $"--ipset={telegramIpSet} " +
                 $"--hostlist={telegramDomains} " +
                 $"--dpi-desync=fake,multisplit " +
                 $"--dpi-desync-repeats=8 " +
@@ -773,11 +783,24 @@ namespace ZapretWPF
                 "--new " +
 
                 /*
-                 * Telegram UDP / QUIC
+                 * Telegram Desktop и API по IPv4.
+                 */
+                $"--filter-tcp=80,443 " +
+                $"--ipset={telegramIpSet} " +
+                $"--dpi-desync=fake,multisplit " +
+                $"--dpi-desync-repeats=8 " +
+                $"--dpi-desync-fooling=ts " +
+                $"--dpi-desync-split-pos=1 " +
+                $"--dpi-desync-split-seqovl=664 " +
+                $"--dpi-desync-split-seqovl-pattern={fakeTls} " +
+                $"--dpi-desync-fake-tls={fakeTls} " +
+                "--new " +
+
+                /*
+                 * Telegram UDP / QUIC по IP-списку.
                  */
                 $"--filter-udp=443 " +
                 $"--ipset={telegramIpSet} " +
-                $"--hostlist={telegramDomains} " +
                 $"--dpi-desync=fake " +
                 $"--dpi-desync-repeats=10 " +
                 $"--dpi-desync-fake-quic={fakeQuic}";

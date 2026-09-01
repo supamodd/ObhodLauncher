@@ -737,6 +737,9 @@ namespace ZapretWPF
             string listsPath =
                 Path.Combine(baseDir, "lists") + "\\";
 
+            string telegramDomains = 
+                $"\"{listsPath}list-telegram.txt\"";
+
             string telegramIpSet =
                 $"\"{listsPath}ipset-telegram.txt\"";
 
@@ -759,6 +762,7 @@ namespace ZapretWPF
                  */
                 $"--filter-tcp=80,443 " +
                 $"--ipset={telegramIpSet} " +
+                $"--hostlist={telegramDomains} " +
                 $"--dpi-desync=fake,multisplit " +
                 $"--dpi-desync-repeats=8 " +
                 $"--dpi-desync-fooling=ts " +
@@ -773,6 +777,7 @@ namespace ZapretWPF
                  */
                 $"--filter-udp=443 " +
                 $"--ipset={telegramIpSet} " +
+                $"--hostlist={telegramDomains} " +
                 $"--dpi-desync=fake " +
                 $"--dpi-desync-repeats=10 " +
                 $"--dpi-desync-fake-quic={fakeQuic}";

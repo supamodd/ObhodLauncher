@@ -21,6 +21,7 @@
 			<ZapretBinFiles Include="obhod-bin\**\*.*" />
 			<ZapretListsFiles Include="obhod-lists\**\*.*" />
 			<ZapretStrategies Include="strategies\**\*.*" />
+			<ZapretListsFiles Include="obhod-lists\**\*.*" />
 		</ItemGroup>
 
 		<Copy
